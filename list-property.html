@@ -347,19 +347,30 @@ async function submitListing(e) {
 
   const pkg = document.getElementById('selectedPackage').value;
   const sellerName = document.getElementById('firstName').value + ' ' + document.getElementById('lastName').value;
+  const propAddr = document.getElementById('propAddress').value;
 
-  // Submit to Formspree — delivers full listing details to 1.aeroponic@gmail.com
+  // Build full listing summary from every field on the form
+  const fd = new FormData(document.getElementById('listingForm'));
+  let summary = 'NEW LISTING SUBMISSION — Pacific Rim Auctions\n';
+  summary += '========================================\n';
+  summary += 'Package: ' + packages[pkg].label + ' (' + packages[pkg].display + ')\n';
+  summary += 'Seller: ' + sellerName + '\n';
+  fd.forEach((v, k) => { if (v && String(v).trim()) summary += k + ': ' + v + '\n'; });
+  summary += '========================================\n';
+  summary += 'Submitted: ' + new Date().toLocaleString();
+
+  // Primary capture attempt (Formspree, if configured) — never blocks the flow
   try {
-    const formData = new FormData(document.getElementById('listingForm'));
-    formData.append('_subject', 'New Listing Submission — ' + packages[pkg].label + ' — ' + document.getElementById('propAddress').value);
-    formData.append('Package', packages[pkg].label);
-    formData.append('ListingFee', packages[pkg].display);
-    await fetch('https://formspree.io/1.aeroponic@gmail.com', {
-      method: 'POST',
-      body: formData,
-      headers: { 'Accept': 'application/json' }
-    });
-  } catch (_) { /* show payment screen regardless */ }
+    fd.append('_subject', 'New Listing — ' + packages[pkg].label + ' — ' + propAddr);
+    fd.append('Package', packages[pkg].label);
+    fd.append('ListingFee', packages[pkg].display);
+    fetch('https://formspree.io/f/xaykeptr', { method: 'POST', body: fd, headers: { 'Accept': 'application/json' } }).catch(()=>{});
+  } catch (_) {}
+
+  // GUARANTEED capture: open a pre-filled email to 1.aeroponic@gmail.com with full listing
+  const subject = encodeURIComponent('New Listing — ' + packages[pkg].label + ' — ' + propAddr);
+  const body = encodeURIComponent(summary);
+  window.location.href = 'mailto:1.aeroponic@gmail.com?subject=' + subject + '&body=' + body;
 
   // Show payment instructions
   document.getElementById('listingForm').style.display = 'none';
