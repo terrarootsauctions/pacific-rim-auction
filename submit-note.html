@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" /><meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Submit a Note — Pacific Rim Auction</title>
+  <link rel="stylesheet" href="css/style.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet" />
+</head>
+<body>
+<nav class="navbar"><div class="nav-inner">
+  <a href="/" class="logo"><span class="logo-wave">🌊</span><span class="logo-text">Pacific Rim <strong>Auction</strong></span></a>
+  <ul class="nav-links">
+    <li><a href="listings.html">Property Auctions</a></li>
+    <li><a href="notes-marketplace.html">Notes Marketplace</a></li>
+    <li><a href="register.html" class="btn btn-primary">Register to Bid</a></li>
+  </ul>
+</div></nav>
+
+<div class="page-header" style="background:linear-gradient(135deg,#1a237e,#283593);">
+  <h1>📜 Submit a Note for Auction</h1>
+  <p>Reach buyers in 249 countries. Get top dollar for your performing or non-performing notes.</p>
+</div>
+
+<section class="form-section">
+  <div class="container">
+    <div class="form-card">
+      <h3 style="font-family:var(--font-serif);font-size:1.6rem;color:var(--ocean);margin-bottom:8px;">Note Details</h3>
+      <p style="color:#6b7280;font-size:.9rem;margin-bottom:32px;">All submissions reviewed within 24 hours. $150 flat listing fee per note, success-based platform fee at closing.</p>
+
+      <form onsubmit="submitNote(event)">
+        <div class="form-row">
+          <div class="form-group">
+            <label>Note Type *</label>
+            <select required>
+              <option value="">Select type</option>
+              <option>Performing Note</option>
+              <option>Non-Performing Note (NPL)</option>
+              <option>Seller-Financed Note</option>
+              <option>Commercial Mortgage Note</option>
+              <option>Partial Note (payment stream)</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Collateral Type *</label>
+            <select required>
+              <option value="">Select collateral</option>
+              <option>Single Family Residence</option>
+              <option>Multi-Family (2-4 units)</option>
+              <option>Commercial Property</option>
+              <option>Land/Vacant Lot</option>
+              <option>Industrial</option>
+              <option>Hospitality/Resort</option>
+              <option>Mixed-Use</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Collateral Property Address *</label>
+          <input type="text" placeholder="Property address securing the note" required />
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Unpaid Principal Balance (UPB) *</label>
+            <input type="number" placeholder="350000" min="10000" required />
+          </div>
+          <div class="form-group">
+            <label>Original Face Value *</label>
+            <input type="number" placeholder="400000" min="10000" required />
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Interest Rate (%) *</label>
+            <input type="number" step="0.01" placeholder="6.75" required />
+          </div>
+          <div class="form-group">
+            <label>Remaining Term (months) *</label>
+            <input type="number" placeholder="264" required />
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Lien Position *</label>
+            <select required>
+              <option value="">Select position</option>
+              <option>First Lien</option>
+              <option>Second Lien</option>
+              <option>Third Lien</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>LTV Estimate (%)</label>
+            <input type="number" placeholder="70" min="1" max="200" />
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Payment Status & History *</label>
+          <textarea placeholder="e.g. Current — borrower has made 48 consecutive payments. Last payment received [date]. Or: Default — borrower stopped paying in [month/year] after [N] payments." required></textarea>
+        </div>
+        <div class="form-group">
+          <label>Minimum Reserve Price (optional)</label>
+          <input type="number" placeholder="Leave blank for no reserve" />
+        </div>
+        <div class="form-group">
+          <label>Country of Note Origin *</label>
+          <input type="text" placeholder="United States" required />
+        </div>
+
+        <hr style="border:none;border-top:1px solid #e5e7eb;margin:28px 0;" />
+        <h4 style="font-family:var(--font-serif);font-size:1.1rem;color:var(--ocean);margin-bottom:16px;">Note Holder Information</h4>
+        <div class="form-row">
+          <div class="form-group"><label>First Name *</label><input type="text" required /></div>
+          <div class="form-group"><label>Last Name *</label><input type="text" required /></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label>Email *</label><input type="email" required /></div>
+          <div class="form-group"><label>Phone *</label><input type="tel" required /></div>
+        </div>
+        <div class="form-group">
+          <label>Entity Name (if applicable)</label>
+          <input type="text" placeholder="Pacific Rim Holdings LLC" />
+        </div>
+
+        <div class="form-group" style="margin-top:20px;">
+          <label style="display:flex;align-items:flex-start;gap:10px;cursor:pointer;">
+            <input type="checkbox" required style="width:auto;margin-top:3px;" />
+            <span style="font-size:.85rem;color:#4b5563;font-weight:400;">I confirm I am the legal note holder or authorized agent, have the right to sell this instrument, and agree to Pacific Rim Auction's Terms of Service and all applicable laws in the note's jurisdiction.</span>
+          </label>
+        </div>
+
+        <button type="submit" class="form-submit">Submit Note — $150 Listing Fee</button>
+        <div class="form-secure" style="margin-top:12px;"><span>🔒 Secure</span><span>·</span><span>💳 Stripe</span><span>·</span><span>✅ $150 refundable if not approved</span></div>
+      </form>
+    </div>
+  </div>
+</section>
+
+<footer class="footer">
+  <div class="footer-bottom" style="border-top:none;">
+    <p>© 2024 Pacific Rim Auctions LLC · Terra Roots Global Realty Solutions LLC · All Rights Reserved</p>
+    <p style="margin-top:4px;color:#9ca3af;">Note sales subject to applicable securities and lending laws in each jurisdiction.</p>
+  </div>
+</footer>
+<script src="js/main.js"></script>
+<script>
+function submitNote(e) {
+  e.preventDefault();
+  alert('📜 Note submission received!\n\nOur team will review within 24 hours and contact you at your email to confirm listing and process the $150 listing fee via Stripe.\n\nMahalo!');
+}
+</script>
+</body>
+</html>

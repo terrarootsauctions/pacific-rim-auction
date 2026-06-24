@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" /><meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Live Auctions — Pacific Rim Auction</title>
+  <link rel="stylesheet" href="css/style.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet" />
+</head>
+<body>
+<nav class="navbar"><div class="nav-inner">
+  <a href="/" class="logo"><span class="logo-wave">🌊</span><span class="logo-text">Pacific Rim <strong>Auction</strong></span></a>
+  <ul class="nav-links">
+    <li><a href="listings.html">Live Auctions</a></li>
+    <li><a href="how-it-works.html">How It Works</a></li>
+    <li><a href="agents.html">For Agents</a></li>
+    <li><a href="list-property.html" class="btn btn-outline">List a Property</a></li>
+    <li><a href="register.html" class="btn btn-primary">Register to Bid</a></li>
+  </ul>
+</div></nav>
+
+<div class="page-header">
+  <h1>🔨 Live Auctions</h1>
+  <p>Real-time bidding on properties across the Pacific Rim and beyond</p>
+</div>
+
+<!-- FILTERS -->
+<div style="background:#fff;border-bottom:1px solid #e5e7eb;padding:16px 0;">
+  <div class="container" style="display:flex;gap:12px;flex-wrap:wrap;align-items:center;">
+    <select style="padding:8px 14px;border:2px solid #e5e7eb;border-radius:8px;font-size:.9rem;" onchange="filterListings()">
+      <option>All Markets</option>
+      <option>Hawaii</option>
+      <option>California</option>
+      <option>Australia</option>
+      <option>Canada</option>
+      <option>Japan</option>
+      <option>Singapore</option>
+    </select>
+    <select style="padding:8px 14px;border:2px solid #e5e7eb;border-radius:8px;font-size:.9rem;">
+      <option>All Price Ranges</option>
+      <option>Under $500K</option>
+      <option>$500K – $2M</option>
+      <option>$2M – $10M</option>
+      <option>Over $10M</option>
+    </select>
+    <select style="padding:8px 14px;border:2px solid #e5e7eb;border-radius:8px;font-size:.9rem;">
+      <option>All Property Types</option>
+      <option>Single Family</option>
+      <option>Condo</option>
+      <option>Luxury Villa</option>
+      <option>Commercial</option>
+      <option>Land</option>
+    </select>
+    <span style="margin-left:auto;font-size:.9rem;color:#6b7280;" id="listingCount">Showing all auctions</span>
+  </div>
+</div>
+
+<section class="section">
+  <div class="container">
+    <div class="listings-grid" id="allListings">
+      <!-- Populated by JS -->
+    </div>
+  </div>
+</section>
+
+<footer class="footer">
+  <div class="footer-bottom" style="border-top:none;">
+    <p>© 2024 Pacific Rim Auctions LLC · Terra Roots Global Realty Solutions LLC · All Rights Reserved</p>
+  </div>
+</footer>
+<script src="js/main.js"></script>
+</body>
+</html>

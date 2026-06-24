@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" /><meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Register to Bid — Pacific Rim Auction</title>
+  <link rel="stylesheet" href="css/style.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet" />
+</head>
+<body>
+<nav class="navbar"><div class="nav-inner">
+  <a href="/" class="logo"><span class="logo-wave">🌊</span><span class="logo-text">Pacific Rim <strong>Auction</strong></span></a>
+  <ul class="nav-links">
+    <li><a href="listings.html">Live Auctions</a></li>
+    <li><a href="list-property.html" class="btn btn-outline">List a Property</a></li>
+    <li><a href="register.html" class="btn btn-primary">Register to Bid</a></li>
+  </ul>
+</div></nav>
+
+<div class="page-header">
+  <h1>🤝 Register to Bid</h1>
+  <p>Free registration. Start bidding on properties across the Pacific Rim today.</p>
+</div>
+
+<section class="form-section">
+  <div class="container">
+    <div class="form-card">
+      <h3 style="font-family:var(--font-serif);font-size:1.6rem;color:var(--ocean);margin-bottom:8px;">Create Your Account</h3>
+      <p style="color:#6b7280;font-size:.9rem;margin-bottom:32px;">Free to register. Our 7-Day Buyer Confidence Guarantee protects every bid.</p>
+
+      <form id="registerForm" onsubmit="submitRegister(event)">
+        <div class="form-row">
+          <div class="form-group"><label>First Name *</label><input type="text" placeholder="John" required /></div>
+          <div class="form-group"><label>Last Name *</label><input type="text" placeholder="Smith" required /></div>
+        </div>
+        <div class="form-group"><label>Email Address *</label><input type="email" placeholder="john@example.com" required /></div>
+        <div class="form-group"><label>Phone Number *</label><input type="tel" placeholder="+1 (808) 555-0100" required /></div>
+        <div class="form-row">
+          <div class="form-group"><label>Country of Residence *</label>
+            <select required>
+              <option value="">Select country</option>
+              <option>United States</option><option>Australia</option><option>Canada</option>
+              <option>Japan</option><option>Singapore</option><option>South Korea</option>
+              <option>New Zealand</option><option>Mexico</option><option>United Kingdom</option>
+              <option>Other</option>
+            </select>
+          </div>
+          <div class="form-group"><label>Buyer Type *</label>
+            <select required>
+              <option value="">Select type</option>
+              <option>Individual Buyer</option>
+              <option>Real Estate Investor</option>
+              <option>Family Office / Trust</option>
+              <option>Corporate Entity</option>
+              <option>International Buyer</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-group"><label>Password *</label><input type="password" placeholder="Min 8 characters" minlength="8" required /></div>
+        <div class="form-group"><label>Confirm Password *</label><input type="password" placeholder="Repeat password" required /></div>
+
+        <hr style="border:none;border-top:1px solid #e5e7eb;margin:24px 0;" />
+        <h4 style="font-size:1rem;color:var(--ocean);margin-bottom:16px;">Bidding Preferences (Optional)</h4>
+        <div class="form-row">
+          <div class="form-group"><label>Min Budget</label><input type="number" placeholder="100000" /></div>
+          <div class="form-group"><label>Max Budget</label><input type="number" placeholder="5000000" /></div>
+        </div>
+
+        <div class="form-group" style="margin-top:16px;">
+          <label style="display:flex;align-items:flex-start;gap:10px;cursor:pointer;">
+            <input type="checkbox" required style="width:auto;margin-top:3px;" />
+            <span style="font-size:.85rem;color:#4b5563;font-weight:400;">I agree to Pacific Rim Auction's <a href="terms.html" style="color:var(--ocean);">Terms of Service</a>, <a href="privacy.html" style="color:var(--ocean);">Privacy Policy</a>, and bidder verification requirements. I understand that winning bids are subject to the 7-Day Buyer Confidence period.</span>
+          </label>
+        </div>
+
+        <button type="submit" class="form-submit">Create Free Account & Start Bidding</button>
+        <div class="form-secure" style="margin-top:12px;"><span>🔒 Secure registration</span><span>·</span><span>✅ Free to join</span><span>·</span><span>🌺 Aloha spirit guaranteed</span></div>
+      </form>
+    </div>
+  </div>
+</section>
+
+<footer class="footer">
+  <div class="footer-bottom" style="border-top:none;">
+    <p>© 2024 Pacific Rim Auctions LLC · Terra Roots Global Realty Solutions LLC · All Rights Reserved</p>
+  </div>
+</footer>
+<script src="js/main.js"></script>
+<script>
+function submitRegister(e) {
+  e.preventDefault();
+  alert('🌺 Mahalo! Your registration is confirmed.\n\nYou will receive a verification email shortly. Once verified, you can place bids on any active auction.\n\nWelcome to the Pacific Rim Ohana!');
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Pacific Rim Auction — Global Real Estate Auctions</title>
+  <meta name="description" content="The world's most trusted real estate auction platform. Born in Hawaii. Built for the world. Handshake confidence, global reach." />
+  <link rel="stylesheet" href="css/style.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet" />
+</head>
+<body>
+
+<!-- NAV -->
+<nav class="navbar">
+  <div class="nav-inner">
+    <a href="/" class="logo">
+      <span class="logo-wave">🌊</span>
+      <span class="logo-text">Pacific Rim <strong>Auction</strong></span>
+    </a>
+    <ul class="nav-links">
+      <li><a href="listings.html">Property Auctions</a></li>
+      <li><a href="notes-marketplace.html">Notes Marketplace</a></li>
+      <li><a href="how-it-works.html">How It Works</a></li>
+      <li><a href="agents.html">For Agents</a></li>
+      <li><a href="list-property.html" class="btn btn-outline">List a Property</a></li>
+      <li><a href="register.html" class="btn btn-primary">Register to Bid</a></li>
+    </ul>
+    <button class="menu-toggle" onclick="toggleMenu()">☰</button>
+  </div>
+  <div class="mobile-menu" id="mobileMenu">
+    <a href="listings.html">Live Auctions</a>
+    <a href="how-it-works.html">How It Works</a>
+    <a href="agents.html">For Agents</a>
+    <a href="list-property.html">List a Property</a>
+    <a href="register.html">Register to Bid</a>
+  </div>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-overlay"></div>
+  <div class="hero-content">
+    <div class="hero-badge">🌺 Born in Hawaii. Built for the World.</div>
+    <h1>Real Estate Auctions<br/><em>You Can Trust</em></h1>
+    <p class="hero-sub">Handshake confidence meets global reach. Transparent bidding, 30-day closings, properties across the Pacific Rim and beyond.</p>
+    <div class="hero-actions">
+      <a href="listings.html" class="btn btn-hero-primary">View Live Auctions</a>
+      <a href="list-property.html" class="btn btn-hero-outline">List Your Property</a>
+    </div>
+    <div class="hero-stats">
+      <div class="stat"><span class="stat-num">249</span><span class="stat-label">Countries</span></div>
+      <div class="stat"><span class="stat-num">6</span><span class="stat-label">Continents</span></div>
+      <div class="stat"><span class="stat-num">1,150+</span><span class="stat-label">Licensed Agents</span></div>
+      <div class="stat"><span class="stat-num">30</span><span class="stat-label">Day Closings</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- TRUST BAR -->
+<div class="trust-bar">
+  <div class="trust-inner">
+    <span>✅ FDIC-Secured Escrow</span>
+    <span>🔒 Blockchain Verified Records</span>
+    <span>🏦 Stripe Payments</span>
+    <span>⚖️ Multi-Jurisdiction Compliant</span>
+    <span>🤝 7-Day Buyer Confidence Guarantee</span>
+  </div>
+</div>
+
+<!-- DUAL TRACK BANNER -->
+<section style="background:#fff;padding:40px 0;border-bottom:1px solid #e5e7eb;">
+  <div class="container">
+    <div style="text-align:center;margin-bottom:28px;">
+      <h2 style="font-family:var(--font-serif);font-size:1.8rem;color:var(--ocean);">Two Markets. One Platform. In Unison.</h2>
+      <p style="color:#6b7280;">Pacific Rim Auction and Terra Roots Global Realty Solutions — working together across 6 continents.</p>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;max-width:800px;margin:0 auto;">
+      <a href="listings.html" style="text-decoration:none;background:linear-gradient(135deg,#0a3d6b,#1565a0);color:#fff;padding:32px 28px;border-radius:16px;display:block;transition:transform .2s;" onmouseover="this.style.transform='translateY(-4px)'" onmouseout="this.style.transform=''">
+        <div style="font-size:2rem;margin-bottom:12px;">🏠</div>
+        <div style="font-family:var(--font-serif);font-size:1.3rem;font-weight:700;margin-bottom:8px;">Property Auctions</div>
+        <div style="font-size:.9rem;opacity:.85;line-height:1.6;">Live real estate auctions in 249 countries. 30-day closings. Blockchain-verified.</div>
+        <div style="margin-top:16px;font-weight:700;color:#f0c040;">Browse Properties →</div>
+      </a>
+      <a href="notes-marketplace.html" style="text-decoration:none;background:linear-gradient(135deg,#1a237e,#283593);color:#fff;padding:32px 28px;border-radius:16px;display:block;transition:transform .2s;" onmouseover="this.style.transform='translateY(-4px)'" onmouseout="this.style.transform=''">
+        <div style="font-size:2rem;margin-bottom:12px;">📜</div>
+        <div style="font-family:var(--font-serif);font-size:1.3rem;font-weight:700;margin-bottom:8px;">Notes Marketplace</div>
+        <div style="font-size:.9rem;opacity:.85;line-height:1.6;">2,500 notes available. Performing, non-performing & seller-financed. Following the sun.</div>
+        <div style="margin-top:16px;font-weight:700;color:#90caf9;">Browse Notes →</div>
+      </a>
+    </div>
+  </div>
+</section>
+
+<!-- FEATURED AUCTIONS -->
+<section class="section">
+  <div class="container">
+    <div class="section-header">
+      <h2>Live Auctions</h2>
+      <p>Active properties closing soon</p>
+      <a href="listings.html" class="link-all">View All Auctions →</a>
+    </div>
+    <div class="listings-grid" id="featuredListings">
+      <!-- Populated by JS -->
+    </div>
+  </div>
+</section>
+
+<!-- HOW IT WORKS -->
+<section class="section section-alt">
+  <div class="container">
+    <div class="section-header">
+      <h2>How Pacific Rim Auction Works</h2>
+      <p>Transparent. Fast. Trusted.</p>
+    </div>
+    <div class="steps-grid">
+      <div class="step">
+        <div class="step-icon">🏠</div>
+        <h3>1. List or Browse</h3>
+        <p>Sellers submit properties with verified titles. Buyers browse live auctions globally with full transparency.</p>
+      </div>
+      <div class="step">
+        <div class="step-icon">🔍</div>
+        <h3>2. Due Diligence</h3>
+        <p>Review inspection reports, title documents, and AI valuations. Our licensed agent network is at your service.</p>
+      </div>
+      <div class="step">
+        <div class="step-icon">🔨</div>
+        <h3>3. Bid with Confidence</h3>
+        <p>Place bids in real-time. Our 7-Day Buyer Confidence Guarantee lets you verify before you commit.</p>
+      </div>
+      <div class="step">
+        <div class="step-icon">🤝</div>
+        <h3>4. Close in 30 Days</h3>
+        <p>Streamlined closing with blockchain-verified records and our secure escrow service. Mahalo!</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FEE STRUCTURE -->
+<section class="section">
+  <div class="container">
+    <div class="section-header">
+      <h2>Transparent, Success-Based Fees</h2>
+      <p>You only pay when we close. No hidden costs.</p>
+    </div>
+    <div class="fees-grid">
+      <div class="fee-card">
+        <div class="fee-tier">Starter</div>
+        <div class="fee-range">Under $500K</div>
+        <div class="fee-pct">5%</div>
+        <div class="fee-label">Platform Fee</div>
+      </div>
+      <div class="fee-card fee-card-featured">
+        <div class="fee-badge">Most Common</div>
+        <div class="fee-tier">Standard</div>
+        <div class="fee-range">$500K – $2M</div>
+        <div class="fee-pct">4%</div>
+        <div class="fee-label">Platform Fee</div>
+      </div>
+      <div class="fee-card">
+        <div class="fee-tier">Premium</div>
+        <div class="fee-range">$2M – $10M</div>
+        <div class="fee-pct">3.5%</div>
+        <div class="fee-label">Platform Fee</div>
+      </div>
+      <div class="fee-card">
+        <div class="fee-tier">Luxury</div>
+        <div class="fee-range">Over $10M</div>
+        <div class="fee-pct">3%</div>
+        <div class="fee-label">Platform Fee</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- REGIONS -->
+<section class="section section-alt">
+  <div class="container">
+    <div class="section-header">
+      <h2>Global Reach, Local Expertise</h2>
+      <p>Active markets across the Pacific Rim and beyond</p>
+    </div>
+    <div class="regions-grid">
+      <div class="region"><span class="flag">🇺🇸</span><strong>United States</strong><span>Hawaii, CA, WA, OR, NV</span></div>
+      <div class="region"><span class="flag">🇦🇺</span><strong>Australia</strong><span>Sydney, Melbourne, Perth</span></div>
+      <div class="region"><span class="flag">🇨🇦</span><strong>Canada</strong><span>Vancouver, Victoria, Calgary</span></div>
+      <div class="region"><span class="flag">🇯🇵</span><strong>Japan</strong><span>Tokyo, Osaka, Kyoto</span></div>
+      <div class="region"><span class="flag">🇸🇬</span><strong>Singapore</strong><span>City-state wide</span></div>
+      <div class="region"><span class="flag">🇰🇷</span><strong>South Korea</strong><span>Seoul, Busan, Jeju</span></div>
+      <div class="region"><span class="flag">🇲🇽</span><strong>Mexico</strong><span>Cabo, Puerto Vallarta, CDMX</span></div>
+      <div class="region"><span class="flag">🇳🇿</span><strong>New Zealand</strong><span>Auckland, Wellington, QTown</span></div>
+      <div class="region"><span class="flag">🌍</span><strong>+ 241 More</strong><span>Coming soon globally</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- CTA STRIP -->
+<section class="cta-strip">
+  <div class="container">
+    <h2>Ready to List Your Property?</h2>
+    <p>Join thousands of sellers closing faster with Pacific Rim Auction.</p>
+    <a href="list-property.html" class="btn btn-cta">Get Started — List Today</a>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer class="footer">
+  <div class="footer-inner">
+    <div class="footer-brand">
+      <span class="logo-wave">🌊</span>
+      <span class="footer-logo-text">Pacific Rim <strong>Auction</strong></span>
+      <p>An umbrella of Pacific Rim Auctions LLC<br/>& Terra Roots Global Realty Solutions LLC</p>
+      <p>Based in Hawaii, USA · Operating Globally</p>
+    </div>
+    <div class="footer-links">
+      <h4>Platform</h4>
+      <ul>
+        <li><a href="listings.html">Live Auctions</a></li>
+        <li><a href="how-it-works.html">How It Works</a></li>
+        <li><a href="list-property.html">List Property</a></li>
+        <li><a href="register.html">Register</a></li>
+      </ul>
+    </div>
+    <div class="footer-links">
+      <h4>Company</h4>
+      <ul>
+        <li><a href="agents.html">Agent Network</a></li>
+        <li><a href="about.html">About Us</a></li>
+        <li><a href="contact.html">Contact</a></li>
+        <li><a href="privacy.html">Privacy Policy</a></li>
+      </ul>
+    </div>
+    <div class="footer-links">
+      <h4>Contact</h4>
+      <ul>
+        <li>📧 info@pacificrimauction.com</li>
+        <li>📞 (808) Pacific</li>
+        <li>🌺 Kauai, Hawaii HQ</li>
+      </ul>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    <p>© 2024 Pacific Rim Auctions LLC · Terra Roots Global Realty Solutions LLC · All Rights Reserved</p>
+    <p>Platform fees are success-based only. Real estate transactions subject to local laws and regulations.</p>
+  </div>
+</footer>
+
+<script src="js/main.js"></script>
+</body>
+</html>
