@@ -5,7 +5,6 @@
   <title>List Your Property — Pacific Rim Auction</title>
   <link rel="stylesheet" href="css/style.css" />
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet" />
-  <script src="https://js.stripe.com/v3/"></script>
 </head>
 <body>
 <nav class="navbar"><div class="nav-inner">
@@ -161,11 +160,49 @@
         </div>
 
         <button type="submit" class="form-submit" id="submitBtn">
-          Continue to Payment — <span id="pkgLabel">$500 Premium Package</span>
+          Submit Listing — <span id="pkgLabel">$500 Premium Package</span>
         </button>
-        <p class="form-note">🔒 Secure checkout via Stripe. Your listing fee is refundable if not approved within 48 hours.</p>
-        <div class="form-secure"><span>🛡️ 256-bit SSL encrypted</span><span>·</span><span>💳 Powered by Stripe</span><span>·</span><span>✅ FDIC-secured escrow</span></div>
+        <p class="form-note">🔒 Your listing is reviewed within 24 hours. Payment completes activation.</p>
+        <div class="form-secure"><span>🛡️ 256-bit SSL encrypted</span><span>·</span><span>🏦 Federally insured banking</span><span>·</span><span>✅ DCCA certified platform</span></div>
       </form>
+
+      <!-- PAYMENT INSTRUCTIONS — shown after successful form submission -->
+      <div id="paymentInstructions" style="display:none;padding:40px;text-align:center;">
+        <div style="font-size:2.5rem;margin-bottom:16px;">✅</div>
+        <h2 style="font-family:var(--font-serif);color:var(--ocean);margin-bottom:8px;">Listing Received!</h2>
+        <p style="color:#6b7280;margin-bottom:32px;">Your property details have been submitted. Complete your listing fee payment below to go live within 24 hours.</p>
+
+        <div style="background:#f0f9ff;border:2px solid var(--ocean);border-radius:16px;padding:32px;max-width:520px;margin:0 auto 32px;text-align:left;">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;">
+            <span style="font-family:var(--font-serif);font-size:1.2rem;color:var(--ocean);font-weight:600;">Listing Fee Due</span>
+            <span id="payAmount" style="font-size:1.8rem;font-weight:700;color:var(--gold);">$500</span>
+          </div>
+
+          <div style="background:white;border-radius:12px;padding:20px;margin-bottom:16px;">
+            <p style="font-weight:600;color:#1f2937;margin-bottom:12px;">⚡ Fastest: Pay via Zelle</p>
+            <p style="font-size:.9rem;color:#4b5563;margin-bottom:8px;">Send your listing fee instantly from any US bank app:</p>
+            <div style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:8px;padding:12px;font-family:monospace;font-size:1rem;color:var(--ocean);text-align:center;letter-spacing:.5px;">
+              1.aeroponic@gmail.com
+            </div>
+            <p style="font-size:.8rem;color:#9ca3af;margin-top:8px;text-align:center;">Use your name + property address as the Zelle memo</p>
+          </div>
+
+          <div style="background:white;border-radius:12px;padding:20px;">
+            <p style="font-weight:600;color:#1f2937;margin-bottom:12px;">🏦 Wire / ACH Transfer</p>
+            <div style="font-size:.9rem;color:#4b5563;line-height:2;">
+              <div><strong>Bank:</strong> Kauai Government Employees Federal Credit Union</div>
+              <div><strong>Routing:</strong> 321379915</div>
+              <div><strong>Account type:</strong> Business Checking</div>
+              <div><strong>Payable to:</strong> Pacific Rim Auctions LLC</div>
+            </div>
+            <p style="font-size:.8rem;color:#9ca3af;margin-top:12px;">For full ACH account number, email <a href="mailto:1.aeroponic@gmail.com" style="color:var(--ocean);">1.aeroponic@gmail.com</a></p>
+          </div>
+        </div>
+
+        <div style="background:#fefce8;border:1px solid #fbbf24;border-radius:12px;padding:16px;max-width:520px;margin:0 auto;font-size:.85rem;color:#92400e;">
+          📩 After payment, email your payment confirmation to <strong>1.aeroponic@gmail.com</strong> — your listing activates within 24 hours.
+        </div>
+      </div>
     </div>
   </div>
 </section>
@@ -179,9 +216,9 @@
 <script src="js/main.js"></script>
 <script>
 const packages = {
-  standard: { label: '$200 Standard Package', price: 200, priceId: 'REPLACE_WITH_STRIPE_PRICE_ID_STANDARD' },
-  premium:  { label: '$500 Premium Package',  price: 500, priceId: 'REPLACE_WITH_STRIPE_PRICE_ID_PREMIUM'  },
-  luxury:   { label: '$1,000 Luxury Package', price: 1000, priceId: 'REPLACE_WITH_STRIPE_PRICE_ID_LUXURY'  },
+  standard: { label: '$200 Standard Package', price: 200, display: '$200' },
+  premium:  { label: '$500 Premium Package',  price: 500, display: '$500'  },
+  luxury:   { label: '$1,000 Luxury Package', price: 1000, display: '$1,000' },
 };
 
 function selectPackage(pkg) {
@@ -198,52 +235,29 @@ async function submitListing(e) {
   e.preventDefault();
   const btn = document.getElementById('submitBtn');
   btn.disabled = true;
-  btn.textContent = 'Redirecting to payment…';
+  btn.textContent = 'Submitting…';
 
   const pkg = document.getElementById('selectedPackage').value;
-  const priceId = packages[pkg].priceId;
+  const sellerName = document.getElementById('firstName').value + ' ' + document.getElementById('lastName').value;
 
-  // Collect form data to pass to backend
-  const payload = {
-    package: pkg,
-    price: packages[pkg].price,
-    property: {
-      address: document.getElementById('propAddress').value,
-      type: document.getElementById('propType').value,
-      startBid: document.getElementById('startBid').value,
-      beds: document.getElementById('propBeds').value,
-      baths: document.getElementById('propBaths').value,
-      sqft: document.getElementById('propSqft').value,
-      description: document.getElementById('propDesc').value,
-    },
-    seller: {
-      firstName: document.getElementById('firstName').value,
-      lastName: document.getElementById('lastName').value,
-      email: document.getElementById('sellerEmail').value,
-      phone: document.getElementById('sellerPhone').value,
-    }
-  };
-
-  // TODO: Replace with your Netlify/Vercel function endpoint
-  // This calls your backend which creates a Stripe Checkout Session
+  // Submit to Formspree — delivers full listing details to 1.aeroponic@gmail.com
   try {
-    const res = await fetch('/api/create-checkout-session', {
+    const formData = new FormData(document.getElementById('listingForm'));
+    formData.append('_subject', 'New Listing Submission — ' + packages[pkg].label + ' — ' + document.getElementById('propAddress').value);
+    formData.append('Package', packages[pkg].label);
+    formData.append('ListingFee', packages[pkg].display);
+    await fetch('https://formspree.io/1.aeroponic@gmail.com', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload)
+      body: formData,
+      headers: { 'Accept': 'application/json' }
     });
-    const data = await res.json();
-    if (data.url) {
-      window.location.href = data.url;
-    } else {
-      throw new Error(data.error || 'Payment initialization failed');
-    }
-  } catch (err) {
-    // Fallback: direct Stripe Checkout link (replace with your own)
-    alert('Redirecting to secure payment...\n\n(Payment gateway will be live once deployed with your Stripe keys.)');
-    btn.disabled = false;
-    btn.innerHTML = 'Continue to Payment — <span id="pkgLabel">' + packages[pkg].label + '</span>';
-  }
+  } catch (_) { /* show payment screen regardless */ }
+
+  // Show payment instructions
+  document.getElementById('listingForm').style.display = 'none';
+  document.getElementById('payAmount').textContent = packages[pkg].display;
+  document.getElementById('paymentInstructions').style.display = 'block';
+  window.scrollTo({ top: document.getElementById('paymentInstructions').offsetTop - 80, behavior: 'smooth' });
 }
 </script>
 </body>
