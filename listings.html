@@ -20,8 +20,68 @@
 
 <div class="page-header">
   <h1>🔨 Live Auctions</h1>
-  <p>Real-time bidding on properties across the Pacific Rim and beyond</p>
+  <p>Real-time bidding on properties, assets, and unclaimed holdings across 249 countries and 6 continents</p>
 </div>
+
+<!-- ASSET CATEGORY GRID -->
+<section style="background:#f9fafb;border-bottom:1px solid #e5e7eb;padding:40px 0;">
+  <div class="container">
+    <h2 style="font-family:var(--font-serif);text-align:center;margin-bottom:8px;color:var(--ocean);">Asset Categories</h2>
+    <p style="text-align:center;color:#6b7280;margin-bottom:32px;font-size:.95rem;">Pacific Rim Auction accepts listings across all dormant, unclaimed, and market-ready asset classes</p>
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:16px;">
+      <div onclick="setCategoryFilter('Real Property')" style="cursor:pointer;background:white;border:2px solid #e5e7eb;border-radius:12px;padding:20px 16px;text-align:center;transition:border-color .2s;" onmouseover="this.style.borderColor='var(--gold)'" onmouseout="this.style.borderColor='#e5e7eb'">
+        <div style="font-size:2rem;margin-bottom:8px;">🏘️</div>
+        <div style="font-weight:600;color:#1f2937;font-size:.9rem;">Real Property</div>
+        <div style="color:#9ca3af;font-size:.75rem;margin-top:4px;">Vacant · Abandoned · Tax-defaulted · Heir · Mineral rights</div>
+      </div>
+      <div onclick="setCategoryFilter('Financial Assets')" style="cursor:pointer;background:white;border:2px solid #e5e7eb;border-radius:12px;padding:20px 16px;text-align:center;transition:border-color .2s;" onmouseover="this.style.borderColor='var(--gold)'" onmouseout="this.style.borderColor='#e5e7eb'">
+        <div style="font-size:2rem;margin-bottom:8px;">💰</div>
+        <div style="font-weight:600;color:#1f2937;font-size:.9rem;">Financial Assets</div>
+        <div style="color:#9ca3af;font-size:.75rem;margin-top:4px;">Dormant accounts · Unclaimed dividends · Bonds · Trusts</div>
+      </div>
+      <div onclick="setCategoryFilter('Business & Corporate')" style="cursor:pointer;background:white;border:2px solid #e5e7eb;border-radius:12px;padding:20px 16px;text-align:center;transition:border-color .2s;" onmouseover="this.style.borderColor='var(--gold)'" onmouseout="this.style.borderColor='#e5e7eb'">
+        <div style="font-size:2rem;margin-bottom:8px;">🏢</div>
+        <div style="font-weight:600;color:#1f2937;font-size:.9rem;">Business & Corporate</div>
+        <div style="color:#9ca3af;font-size:.75rem;margin-top:4px;">Dissolved companies · Receivables · Royalties · IP</div>
+      </div>
+      <div onclick="setCategoryFilter('Insurance & Benefits')" style="cursor:pointer;background:white;border:2px solid #e5e7eb;border-radius:12px;padding:20px 16px;text-align:center;transition:border-color .2s;" onmouseover="this.style.borderColor='var(--gold)'" onmouseout="this.style.borderColor='#e5e7eb'">
+        <div style="font-size:2rem;margin-bottom:8px;">🛡️</div>
+        <div style="font-weight:600;color:#1f2937;font-size:.9rem;">Insurance & Benefits</div>
+        <div style="color:#9ca3af;font-size:.75rem;margin-top:4px;">Life insurance · Settlement checks · Survivor benefits</div>
+      </div>
+      <div onclick="setCategoryFilter('Transportation')" style="cursor:pointer;background:white;border:2px solid #e5e7eb;border-radius:12px;padding:20px 16px;text-align:center;transition:border-color .2s;" onmouseover="this.style.borderColor='var(--gold)'" onmouseout="this.style.borderColor='#e5e7eb'">
+        <div style="font-size:2rem;margin-bottom:8px;">🚢</div>
+        <div style="font-weight:600;color:#1f2937;font-size:.9rem;">Transportation</div>
+        <div style="color:#9ca3af;font-size:.75rem;margin-top:4px;">Vehicles · Aircraft · Yachts · Cargo · Rail</div>
+      </div>
+      <div onclick="setCategoryFilter('Precious & Collectibles')" style="cursor:pointer;background:white;border:2px solid #e5e7eb;border-radius:12px;padding:20px 16px;text-align:center;transition:border-color .2s;" onmouseover="this.style.borderColor='var(--gold)'" onmouseout="this.style.borderColor='#e5e7eb'">
+        <div style="font-size:2rem;margin-bottom:8px;">💎</div>
+        <div style="font-weight:600;color:#1f2937;font-size:.9rem;">Precious & Collectibles</div>
+        <div style="color:#9ca3af;font-size:.75rem;margin-top:4px;">Gold · Silver · Art · Watches · Coins · Jewelry</div>
+      </div>
+      <div onclick="setCategoryFilter('Natural Resources')" style="cursor:pointer;background:white;border:2px solid #e5e7eb;border-radius:12px;padding:20px 16px;text-align:center;transition:border-color .2s;" onmouseover="this.style.borderColor='var(--gold)'" onmouseout="this.style.borderColor='#e5e7eb'">
+        <div style="font-size:2rem;margin-bottom:8px;">⛏️</div>
+        <div style="font-weight:600;color:#1f2937;font-size:.9rem;">Natural Resources</div>
+        <div style="color:#9ca3af;font-size:.75rem;margin-top:4px;">Mining claims · Oil & gas · Timber · Water rights</div>
+      </div>
+      <div onclick="setCategoryFilter('Intangible & IP')" style="cursor:pointer;background:white;border:2px solid #e5e7eb;border-radius:12px;padding:20px 16px;text-align:center;transition:border-color .2s;" onmouseover="this.style.borderColor='var(--gold)'" onmouseout="this.style.borderColor='#e5e7eb'">
+        <div style="font-size:2rem;margin-bottom:8px;">📜</div>
+        <div style="font-weight:600;color:#1f2937;font-size:.9rem;">Intangible & IP</div>
+        <div style="color:#9ca3af;font-size:.75rem;margin-top:4px;">Patents · Trademarks · Music royalties · Domains</div>
+      </div>
+      <div onclick="setCategoryFilter('Estate & Probate')" style="cursor:pointer;background:white;border:2px solid #e5e7eb;border-radius:12px;padding:20px 16px;text-align:center;transition:border-color .2s;" onmouseover="this.style.borderColor='var(--gold)'" onmouseout="this.style.borderColor='#e5e7eb'">
+        <div style="font-size:2rem;margin-bottom:8px;">⚖️</div>
+        <div style="font-weight:600;color:#1f2937;font-size:.9rem;">Estate & Probate</div>
+        <div style="color:#9ca3af;font-size:.75rem;margin-top:4px;">Missing-heir · Trust distributions · Probate surpluses</div>
+      </div>
+      <div onclick="setCategoryFilter('Public & Utility')" style="cursor:pointer;background:white;border:2px solid #e5e7eb;border-radius:12px;padding:20px 16px;text-align:center;transition:border-color .2s;" onmouseover="this.style.borderColor='var(--gold)'" onmouseout="this.style.borderColor='#e5e7eb'">
+        <div style="font-size:2rem;margin-bottom:8px;">🏛️</div>
+        <div style="font-weight:600;color:#1f2937;font-size:.9rem;">Public & Utility</div>
+        <div style="color:#9ca3af;font-size:.75rem;margin-top:4px;">Tax refunds · Court registry · Escheated balances</div>
+      </div>
+    </div>
+  </div>
+</section>
 
 <!-- FILTERS -->
 <div style="background:#fff;border-bottom:1px solid #e5e7eb;padding:16px 0;">
@@ -30,10 +90,31 @@
       <option>All Markets</option>
       <option>Hawaii</option>
       <option>California</option>
+      <option>Pacific Northwest</option>
       <option>Australia</option>
+      <option>New Zealand</option>
       <option>Canada</option>
       <option>Japan</option>
       <option>Singapore</option>
+      <option>Philippines</option>
+      <option>Indonesia</option>
+      <option>South Korea</option>
+      <option>Hong Kong</option>
+      <option>Taiwan</option>
+      <option>Malaysia</option>
+    </select>
+    <select style="padding:8px 14px;border:2px solid #e5e7eb;border-radius:8px;font-size:.9rem;" id="categoryFilter" onchange="filterListings()">
+      <option value="">All Asset Categories</option>
+      <option>Real Property</option>
+      <option>Financial Assets</option>
+      <option>Business &amp; Corporate</option>
+      <option>Insurance &amp; Benefits</option>
+      <option>Transportation</option>
+      <option>Precious &amp; Collectibles</option>
+      <option>Natural Resources</option>
+      <option>Intangible &amp; IP</option>
+      <option>Estate &amp; Probate</option>
+      <option>Public &amp; Utility</option>
     </select>
     <select style="padding:8px 14px;border:2px solid #e5e7eb;border-radius:8px;font-size:.9rem;">
       <option>All Price Ranges</option>
@@ -42,17 +123,16 @@
       <option>$2M – $10M</option>
       <option>Over $10M</option>
     </select>
-    <select style="padding:8px 14px;border:2px solid #e5e7eb;border-radius:8px;font-size:.9rem;">
-      <option>All Property Types</option>
-      <option>Single Family</option>
-      <option>Condo</option>
-      <option>Luxury Villa</option>
-      <option>Commercial</option>
-      <option>Land</option>
-    </select>
     <span style="margin-left:auto;font-size:.9rem;color:#6b7280;" id="listingCount">Showing all auctions</span>
   </div>
 </div>
+<script>
+function setCategoryFilter(val) {
+  const el = document.getElementById('categoryFilter');
+  if (el) { el.value = val; filterListings && filterListings(); }
+  document.getElementById('allListings') && window.scrollTo({ top: document.getElementById('allListings').offsetTop - 80, behavior: 'smooth' });
+}
+</script>
 
 <section class="section">
   <div class="container">

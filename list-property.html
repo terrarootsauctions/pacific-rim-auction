@@ -19,8 +19,8 @@
 </div></nav>
 
 <div class="page-header">
-  <h1>🏠 List Your Property</h1>
-  <p>Join thousands of sellers closing faster with Pacific Rim Auction. Success-based fees only.</p>
+  <h1>📋 List Your Asset</h1>
+  <p>Real property, financial assets, transportation, collectibles, IP, natural resources — if it has value, it belongs here.</p>
 </div>
 
 <!-- LISTING TIERS -->
@@ -86,16 +86,124 @@
         </div>
         <div class="form-row">
           <div class="form-group">
-            <label>Property Type *</label>
-            <select id="propType" required>
-              <option value="">Select type</option>
-              <option>Single Family Home</option>
-              <option>Condo/Townhouse</option>
-              <option>Luxury Villa</option>
-              <option>Commercial Property</option>
-              <option>Land/Lot</option>
-              <option>Multi-Family</option>
-              <option>Resort/Hotel</option>
+            <label>Asset / Property Type *</label>
+            <select id="propType" name="assetType" required>
+              <option value="">Select asset type…</option>
+              <optgroup label="Real Property">
+                <option>Vacant Land</option>
+                <option>Abandoned House</option>
+                <option>Derelict Commercial Building</option>
+                <option>Tax-Defaulted Parcel</option>
+                <option>Foreclosed Home</option>
+                <option>Heir Property</option>
+                <option>Unprobated Estate</option>
+                <option>Mineral Rights</option>
+                <option>Timber Rights</option>
+                <option>Water Rights</option>
+                <option>Single Family Home</option>
+                <option>Condo / Townhouse</option>
+                <option>Luxury Villa</option>
+                <option>Commercial Property</option>
+                <option>Multi-Family</option>
+                <option>Resort / Hotel</option>
+              </optgroup>
+              <optgroup label="Financial Assets">
+                <option>Dormant Bank Account</option>
+                <option>Inactive Brokerage Account</option>
+                <option>Unclaimed Dividends</option>
+                <option>Uncashed Checks</option>
+                <option>Matured Bonds</option>
+                <option>Forgotten Savings Account</option>
+                <option>Legacy Trust Fund</option>
+                <option>Pension Residuals</option>
+                <option>Annuity Residuals</option>
+                <option>Credit Balances</option>
+              </optgroup>
+              <optgroup label="Business &amp; Corporate">
+                <option>Dissolved Company Assets</option>
+                <option>Liquidation Proceeds</option>
+                <option>Orphaned Receivables</option>
+                <option>Unclaimed Vendor Refunds</option>
+                <option>Surplus Inventory</option>
+                <option>Idle Equipment</option>
+                <option>Share Certificates</option>
+                <option>Partnership Interests</option>
+                <option>Royalties</option>
+                <option>Licensing Payments</option>
+              </optgroup>
+              <optgroup label="Insurance &amp; Benefits">
+                <option>Unclaimed Life Insurance</option>
+                <option>Unpaid Claim Proceeds</option>
+                <option>Premium Refunds</option>
+                <option>Settlement Checks</option>
+                <option>Survivor Benefits</option>
+                <option>Annuity Death Benefits</option>
+                <option>Benefit Overpayments</option>
+              </optgroup>
+              <optgroup label="Transportation">
+                <option>Abandoned Vehicle</option>
+                <option>Classic Car</option>
+                <option>Fleet Vehicle</option>
+                <option>Boat</option>
+                <option>Yacht</option>
+                <option>Aircraft</option>
+                <option>Rail Assets</option>
+                <option>Shipping Container</option>
+                <option>Cargo</option>
+                <option>Salvage Property</option>
+              </optgroup>
+              <optgroup label="Precious &amp; Collectibles">
+                <option>Gold / Bullion</option>
+                <option>Silver</option>
+                <option>Platinum</option>
+                <option>Jewelry</option>
+                <option>Watches</option>
+                <option>Coins</option>
+                <option>Stamps</option>
+                <option>Fine Art</option>
+                <option>Antiques</option>
+              </optgroup>
+              <optgroup label="Natural Resources">
+                <option>Mining Claim</option>
+                <option>Gold Mine Interest</option>
+                <option>Silver Mine Interest</option>
+                <option>Diamond Mine Interest</option>
+                <option>Oil &amp; Gas Interest</option>
+                <option>Coal Interest</option>
+                <option>Quarry Rights</option>
+                <option>Timber Rights (Natural Resource)</option>
+                <option>Water Concession</option>
+              </optgroup>
+              <optgroup label="Intangible &amp; IP">
+                <option>Patent</option>
+                <option>Trademark</option>
+                <option>Copyright</option>
+                <option>Music Royalties</option>
+                <option>Film Rights</option>
+                <option>Software License</option>
+                <option>Domain Name</option>
+                <option>Trade Secret</option>
+                <option>Data Rights</option>
+                <option>Licensing Contract</option>
+              </optgroup>
+              <optgroup label="Estate &amp; Probate">
+                <option>Residual Estate Fund</option>
+                <option>Missing-Heir Property</option>
+                <option>Trust Distribution</option>
+                <option>Guardianship Balance</option>
+                <option>Inherited Shares</option>
+                <option>Probate Surplus</option>
+                <option>Unadministered Estate</option>
+                <option>Heirship Interest</option>
+              </optgroup>
+              <optgroup label="Public &amp; Utility">
+                <option>Tax Refund</option>
+                <option>Government Overpayment</option>
+                <option>Utility Deposit</option>
+                <option>Court Registry Funds</option>
+                <option>Municipal Refund</option>
+                <option>Escheated Balance</option>
+              </optgroup>
             </select>
           </div>
           <div class="form-group">
