@@ -1,0 +1,668 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Find Unclaimed Assets Worldwide — Pacific Rim Auctions</title>
+  <meta name="description" content="Search official government unclaimed property registries across 249 countries and 6 continents. 196 years of dormant assets. Pacific Rim Auctions brings zombie assets back to market."/>
+  <link rel="stylesheet" href="css/style.css"/>
+  <style>
+    .continent-section { margin-bottom: 56px; }
+    .continent-header {
+      display: flex; align-items: center; gap: 14px;
+      padding: 16px 24px;
+      border-radius: 12px;
+      margin-bottom: 24px;
+      color: white;
+      font-family: var(--font-serif);
+    }
+    .continent-header.pacific  { background: linear-gradient(135deg, #0a3d6b, #1565a0); }
+    .continent-header.americas { background: linear-gradient(135deg, #1a4731, #2e7d32); }
+    .continent-header.europe   { background: linear-gradient(135deg, #4a0e8f, #7b1fa2); }
+    .continent-header.africa   { background: linear-gradient(135deg, #7c3800, #e65100); }
+    .continent-header.asia     { background: linear-gradient(135deg, #880e0e, #c62828); }
+    .continent-header.mideast  { background: linear-gradient(135deg, #5d4037, #8d6e63); }
+    .continent-header h2 { margin:0; font-size:1.4rem; }
+    .continent-header .flag { font-size: 2rem; }
+    .country-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 16px;
+    }
+    .country-card {
+      background: white;
+      border: 1px solid #e5e7eb;
+      border-radius: 10px;
+      padding: 18px;
+      transition: box-shadow .2s, border-color .2s;
+    }
+    .country-card:hover { box-shadow: 0 4px 12px rgba(0,0,0,.08); border-color: var(--gold); }
+    .country-name { font-weight: 700; color: #1f2937; margin-bottom: 6px; font-size:.95rem; }
+    .registry-links a {
+      display: block;
+      font-size: .82rem;
+      color: var(--ocean);
+      text-decoration: none;
+      margin-bottom: 4px;
+      padding: 3px 0;
+      border-bottom: 1px dashed #e5e7eb;
+    }
+    .registry-links a:hover { color: var(--gold); }
+    .registry-links a:last-child { border-bottom: none; }
+    .asset-tags { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 8px; }
+    .tag {
+      background: #f3f4f6; color: #6b7280;
+      font-size: .7rem; padding: 2px 7px; border-radius: 20px;
+    }
+    .cta-card {
+      background: linear-gradient(135deg, var(--ocean), #1565a0);
+      color: white;
+      border-radius: 14px;
+      padding: 28px 32px;
+      text-align: center;
+      margin: 40px 0;
+    }
+    .cta-card h3 { font-family: var(--font-serif); font-size: 1.4rem; margin-bottom: 8px; }
+    .stat-row {
+      display: flex; justify-content: center; gap: 40px;
+      margin: 32px 0 16px; flex-wrap: wrap;
+    }
+    .stat-item { text-align: center; }
+    .stat-item .n { font-family: var(--font-serif); font-size: 2.2rem; font-weight: 700; color: var(--gold); }
+    .stat-item .l { font-size: .8rem; color: #9ca3af; text-transform: uppercase; letter-spacing: .05em; }
+    .ticker-wrap {
+      background: #0a3d6b;
+      color: #f0c040;
+      padding: 10px 0;
+      font-size: .85rem;
+      font-weight: 600;
+      overflow: hidden;
+      white-space: nowrap;
+    }
+    .ticker-inner {
+      display: inline-block;
+      animation: ticker 60s linear infinite;
+    }
+    @keyframes ticker {
+      0%   { transform: translateX(0); }
+      100% { transform: translateX(-50%); }
+    }
+  </style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav class="navbar">
+  <div class="nav-inner">
+    <a href="index.html" class="nav-logo"><span class="logo-wave">🌊</span> Pacific Rim <strong>Auctions</strong></a>
+    <div class="nav-links">
+      <a href="listings.html">Auctions</a>
+      <a href="find-assets.html" class="active">Find Assets</a>
+      <a href="notes-marketplace.html">Notes</a>
+      <a href="list-property.html" class="btn-nav">List Asset</a>
+    </div>
+  </div>
+</nav>
+
+<!-- TICKER -->
+<div class="ticker-wrap">
+  <div class="ticker-inner">
+    🌅 Following the Sun &nbsp;·&nbsp; 🌊 Pacific Rim Auctions — Always Open &nbsp;·&nbsp; 249 Countries &nbsp;·&nbsp; 6 Continents &nbsp;·&nbsp; 2,500 Nodes &nbsp;·&nbsp; 196 Years of Dormant Assets &nbsp;·&nbsp; First in the Door &nbsp;·&nbsp; Do No Harm &nbsp;·&nbsp;
+    🌅 Following the Sun &nbsp;·&nbsp; 🌊 Pacific Rim Auctions — Always Open &nbsp;·&nbsp; 249 Countries &nbsp;·&nbsp; 6 Continents &nbsp;·&nbsp; 2,500 Nodes &nbsp;·&nbsp; 196 Years of Dormant Assets &nbsp;·&nbsp; First in the Door &nbsp;·&nbsp; Do No Harm &nbsp;·&nbsp;
+  </div>
+</div>
+
+<div class="page-header">
+  <h1>🔍 Find Unclaimed Assets Worldwide</h1>
+  <p>Official government registries for dormant, unclaimed, and zombie assets — 249 countries, 6 continents, 196 years back to 1830. Found an asset? List it on Pacific Rim Auctions.</p>
+</div>
+
+<div class="container" style="padding: 48px 0;">
+
+  <!-- STATS -->
+  <div class="stat-row">
+    <div class="stat-item"><div class="n">$900B+</div><div class="l">Est. Global Unclaimed Assets</div></div>
+    <div class="stat-item"><div class="n">249</div><div class="l">Countries Covered</div></div>
+    <div class="stat-item"><div class="n">196</div><div class="l">Years Back to 1830</div></div>
+    <div class="stat-item"><div class="n">2,500</div><div class="l">Active Nodes</div></div>
+  </div>
+
+  <!-- CTA CARD -->
+  <div class="cta-card">
+    <h3>Found a Dormant or Unclaimed Asset?</h3>
+    <p style="opacity:.85;margin-bottom:18px;">List it on Pacific Rim Auctions. We connect it to qualified buyers across all 249 countries. Direct deposit to your account at closing.</p>
+    <a href="list-property.html" style="background:var(--gold);color:#1a1a1a;padding:12px 32px;border-radius:8px;font-weight:700;text-decoration:none;display:inline-block;">List Your Asset →</a>
+  </div>
+
+  <!-- ============================== -->
+  <!-- PACIFIC / OCEANIA -->
+  <!-- ============================== -->
+  <div class="continent-section">
+    <div class="continent-header pacific">
+      <span class="flag">🌊</span>
+      <div>
+        <h2>Pacific &amp; Oceania</h2>
+        <p style="margin:0;opacity:.85;font-size:.9rem;">United States · Australia · New Zealand · Pacific Islands · Canada</p>
+      </div>
+    </div>
+    <div class="country-grid">
+
+      <div class="country-card">
+        <div class="country-name">🇺🇸 United States — Federal</div>
+        <div class="registry-links">
+          <a href="https://www.missingmoney.com" target="_blank" rel="noopener">MissingMoney.com — National NAUPA Search</a>
+          <a href="https://www.usa.gov/unclaimed-money" target="_blank" rel="noopener">USA.gov — Federal Unclaimed Money Guide</a>
+          <a href="https://www.fdic.gov/resources/resolutions/bank-failures/failed-bank-list/" target="_blank" rel="noopener">FDIC — Failed Bank Unclaimed Funds</a>
+          <a href="https://www.pbgc.gov/search-for-unclaimed-pensions" target="_blank" rel="noopener">PBGC — Unclaimed Pension Benefits</a>
+          <a href="https://efts.sec.gov/LATEST/search-index?q=%22unclaimed%22&dateRange=custom" target="_blank" rel="noopener">SEC — Unclaimed Investor Funds</a>
+        </div>
+        <div class="asset-tags">
+          <span class="tag">Bank Accounts</span><span class="tag">Pensions</span><span class="tag">Real Property</span><span class="tag">Stocks</span>
+        </div>
+      </div>
+
+      <div class="country-card">
+        <div class="country-name">🇺🇸 United States — Key States</div>
+        <div class="registry-links">
+          <a href="https://hclaimed.ehawaii.gov" target="_blank" rel="noopener">Hawaii — HClaimed.eHawaii.gov</a>
+          <a href="https://ucop.ca.gov" target="_blank" rel="noopener">California — State Controller Unclaimed</a>
+          <a href="https://www.texascash.com" target="_blank" rel="noopener">Texas — TexasCash.com</a>
+          <a href="https://www.nyfound.gov" target="_blank" rel="noopener">New York — NYFound.gov</a>
+          <a href="https://www.oregon.gov/dsl/Pages/unclaimed.aspx" target="_blank" rel="noopener">Oregon — Dept. of State Lands</a>
+          <a href="https://www.dor.wa.gov/find-your-unclaimed-property" target="_blank" rel="noopener">Washington — DOR Unclaimed Property</a>
+        </div>
+        <div class="asset-tags">
+          <span class="tag">All 50 States</span><span class="tag">NAUPA Network</span>
+        </div>
+      </div>
+
+      <div class="country-card">
+        <div class="country-name">🇦🇺 Australia</div>
+        <div class="registry-links">
+          <a href="https://moneysmart.gov.au/managing-your-money/unclaimed-money" target="_blank" rel="noopener">ASIC — Unclaimed Money (MoneySmart)</a>
+          <a href="https://www.ato.gov.au/Individuals/Super/Growing-and-keeping-track-of-your-super/Lost-and-unclaimed-super-money/" target="_blank" rel="noopener">ATO — Lost &amp; Unclaimed Super</a>
+          <a href="https://www.afsa.gov.au" target="_blank" rel="noopener">AFSA — Unclaimed Bankruptcy Assets</a>
+          <a href="https://www.revenue.nsw.gov.au/money-assets/unclaimed-money" target="_blank" rel="noopener">NSW Revenue — Unclaimed Money</a>
+        </div>
+        <div class="asset-tags">
+          <span class="tag">Superannuation</span><span class="tag">Bank Accounts</span><span class="tag">Property</span>
+        </div>
+      </div>
+
+      <div class="country-card">
+        <div class="country-name">🇳🇿 New Zealand</div>
+        <div class="registry-links">
+          <a href="https://www.ird.govt.nz/topics/unclaimed-money" target="_blank" rel="noopener">IRD — Unclaimed Money Register</a>
+          <a href="https://www.companiesoffice.govt.nz/all-registers/companies/dissolving-or-removing-a-company/dormant-and-removed-companies/" target="_blank" rel="noopener">Companies Office — Dissolved Co. Assets</a>
+          <a href="https://sorted.org.nz/kiwisaver/lost-kiwisaver" target="_blank" rel="noopener">Sorted — Lost KiwiSaver Funds</a>
+        </div>
+        <div class="asset-tags">
+          <span class="tag">KiwiSaver</span><span class="tag">Bank Accounts</span><span class="tag">Estates</span>
+        </div>
+      </div>
+
+      <div class="country-card">
+        <div class="country-name">🇨🇦 Canada</div>
+        <div class="registry-links">
+          <a href="https://ucbsweb.cds.ca" target="_blank" rel="noopener">Bank of Canada — Unclaimed Balances</a>
+          <a href="https://www.canada.ca/en/revenue-agency/services/tax/individuals/topics/about-your-tax-return/tax-return/completing-a-tax-return/deductions-credits-expenses/unclaimed-amounts.html" target="_blank" rel="noopener">CRA — Unclaimed Tax Refunds</a>
+          <a href="https://www.bcsc.bc.ca" target="_blank" rel="noopener">BC Securities Commission — Unclaimed</a>
+          <a href="https://www.ontario.ca/page/unclaimed-property-ontario" target="_blank" rel="noopener">Ontario — Unclaimed Property</a>
+        </div>
+        <div class="asset-tags">
+          <span class="tag">Bank Balances</span><span class="tag">Tax Refunds</span><span class="tag">Securities</span>
+        </div>
+      </div>
+
+      <div class="country-card">
+        <div class="country-name">🇵🇭 Philippines</div>
+        <div class="registry-links">
+          <a href="https://www.bsp.gov.ph/Regulations/Regulations/circular1033.pdf" target="_blank" rel="noopener">BSP — Dormant Account Guidelines</a>
+          <a href="https://www.sec.gov.ph" target="_blank" rel="noopener">SEC Philippines — Dissolved Corp Assets</a>
+          <a href="https://www.bir.gov.ph" target="_blank" rel="noopener">BIR — Unclaimed Tax Refunds</a>
+        </div>
+        <div class="asset-tags">
+          <span class="tag">Dormant Accounts</span><span class="tag">Corporate Assets</span>
+        </div>
+      </div>
+
+      <div class="country-card">
+        <div class="country-name">🇮🇩 Indonesia</div>
+        <div class="registry-links">
+          <a href="https://www.ojk.go.id" target="_blank" rel="noopener">OJK — Financial Services Authority</a>
+          <a href="https://www.bi.go.id" target="_blank" rel="noopener">Bank Indonesia — Dormant Funds</a>
+        </div>
+        <div class="asset-tags">
+          <span class="tag">Bank Accounts</span><span class="tag">Insurance</span>
+        </div>
+      </div>
+
+      <div class="country-card">
+        <div class="country-name">🇵🇬 Papua New Guinea · 🇫🇯 Fiji · Pacific Islands</div>
+        <div class="registry-links">
+          <a href="https://www.bpng.com.pg" target="_blank" rel="noopener">Bank of PNG — Dormant Accounts</a>
+          <a href="https://www.rbf.gov.fj" target="_blank" rel="noopener">Reserve Bank Fiji — Unclaimed Assets</a>
+          <a href="https://list-property.html" target="_blank">List a Pacific Islands Asset on PRA →</a>
+        </div>
+        <div class="asset-tags">
+          <span class="tag">Land Rights</span><span class="tag">Mining Claims</span>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ============================== -->
+  <!-- ASIA -->
+  <!-- ============================== -->
+  <div class="continent-section">
+    <div class="continent-header asia">
+      <span class="flag">🌏</span>
+      <div>
+        <h2>Asia</h2>
+        <p style="margin:0;opacity:.85;font-size:.9rem;">Japan · China · South Korea · Singapore · Malaysia · Thailand · India · Vietnam · Taiwan</p>
+      </div>
+    </div>
+    <div class="country-grid">
+
+      <div class="country-card">
+        <div class="country-name">🇯🇵 Japan</div>
+        <div class="registry-links">
+          <a href="https://www.moj.go.jp/MINJI/minji05_00341.html" target="_blank" rel="noopener">Ministry of Justice — Unclaimed Estates</a>
+          <a href="https://www.nta.go.jp" target="_blank" rel="noopener">National Tax Agency — Tax Refunds</a>
+          <a href="https://www.fsa.go.jp" target="_blank" rel="noopener">FSA — Dormant Deposit Accounts</a>
+          <a href="https://sleepingmoney.jp" target="_blank" rel="noopener">Sleeping Money Japan (眠れる預金)</a>
+        </div>
+        <div class="asset-tags">
+          <span class="tag">Dormant Deposits</span><span class="tag">Estates</span><span class="tag">Corporate</span>
+        </div>
+      </div>
+
+      <div class="country-card">
+        <div class="country-name">🇸🇬 Singapore</div>
+        <div class="registry-links">
+          <a href="https://www.mas.gov.sg/regulation/explainers/unclaimed-moneys" target="_blank" rel="noopener">MAS — Unclaimed Moneys Act</a>
+          <a href="https://www.acra.gov.sg" target="_blank" rel="noopener">ACRA — Dissolved Company Assets</a>
+          <a href="https://www.cpf.gov.sg/member/faq/account-maintenance/general-enquiries/what-happens-to-unclaimed-cpf-savings-" target="_blank" rel="noopener">CPF — Unclaimed Retirement Savings</a>
+        </div>
+        <div class="asset-tags">
+          <span class="tag">Bank Deposits</span><span class="tag">CPF</span><span class="tag">Corporate</span>
+        </div>
+      </div>
+
+      <div class="country-card">
+        <div class="country-name">🇰🇷 South Korea</div>
+        <div class="registry-links">
+          <a href="https://www.dormancyinfo.or.kr" target="_blank" rel="noopener">Korea Dormancy Info — 잠자는 내 돈 찾기</a>
+          <a href="https://www.fss.or.kr" target="_blank" rel="noopener">FSS — Financial Supervisory Service</a>
+          <a href="https://www.nhis.or.kr" target="_blank" rel="noopener">NHI — Unclaimed Insurance Benefits</a>
+        </div>
+        <div class="asset-tags">
+          <span class="tag">Dormant Deposits</span><span class="tag">Insurance</span>
+        </div>
+      </div>
+
+      <div class="country-card">
+        <div class="country-name">🇭🇰 Hong Kong</div>
+        <div class="registry-links">
+          <a href="https://www.hkma.gov.hk/eng/key-functions/banking-stability/dormant-accounts/" target="_blank" rel="noopener">HKMA — Dormant Account Register</a>
+          <a href="https://www.cr.gov.hk" target="_blank" rel="noopener">Companies Registry — Dissolved Co. Assets</a>
+          <a href="https://www.esf.org.hk" target="_blank" rel="noopener">Estate Management Office — Estates</a>
+        </div>
+        <div class="asset-tags">
+          <span class="tag">Bank Accounts</span><span class="tag">Corporate</span>
+        </div>
+      </div>
+
+      <div class="country-card">
+        <div class="country-name">🇹🇼 Taiwan</div>
+        <div class="registry-links">
+          <a href="https://www.fsc.gov.tw" target="_blank" rel="noopener">FSC — Dormant Deposits Register</a>
+          <a href="https://www.mof.gov.tw" target="_blank" rel="noopener">Ministry of Finance — Unclaimed Tax Refunds</a>
+        </div>
+        <div class="asset-tags">
+          <span class="tag">Deposits</span><span class="tag">Securities</span>
+        </div>
+      </div>
+
+      <div class="country-card">
+        <div class="country-name">🇲🇾 Malaysia</div>
+        <div class="registry-links">
+          <a href="https://www.myeg.com.my/myegservices/unclaimed-money" target="_blank" rel="noopener">MyEG — Unclaimed Money Search</a>
+          <a href="https://www.bnm.gov.my/unclaimed-monies" target="_blank" rel="noopener">Bank Negara — Unclaimed Monies</a>
+          <a href="https://www.kwsp.gov.my" target="_blank" rel="noopener">EPF — Unclaimed Retirement Funds</a>
+        </div>
+        <div class="asset-tags">
+          <span class="tag">EPF</span><span class="tag">Bank Accounts</span><span class="tag">Insurance</span>
+        </div>
+      </div>
+
+      <div class="country-card">
+        <div class="country-name">🇮🇳 India</div>
+        <div class="registry-links">
+          <a href="https://udgam.rbi.org.in" target="_blank" rel="noopener">RBI UDGAM — Unclaimed Deposits Portal</a>
+          <a href="https://www.epfindia.gov.in" target="_blank" rel="noopener">EPFO — Unclaimed PF Accounts</a>
+          <a href="https://iepfa.gov.in" target="_blank" rel="noopener">IEPFA — Investor Education &amp; Protection Fund</a>
+          <a href="https://www.incometax.gov.in" target="_blank" rel="noopener">Income Tax — Pending Refunds</a>
+        </div>
+        <div class="asset-tags">
+          <span class="tag">Bank Deposits</span><span class="tag">PF</span><span class="tag">Dividends</span>
+        </div>
+      </div>
+
+      <div class="country-card">
+        <div class="country-name">🇨🇳 China · 🇻🇳 Vietnam · 🇹🇭 Thailand</div>
+        <div class="registry-links">
+          <a href="https://www.pboc.gov.cn" target="_blank" rel="noopener">PBOC — People's Bank of China</a>
+          <a href="https://www.sbv.gov.vn" target="_blank" rel="noopener">State Bank of Vietnam</a>
+          <a href="https://www.bot.or.th" target="_blank" rel="noopener">Bank of Thailand — Dormant Accounts</a>
+        </div>
+        <div class="asset-tags">
+          <span class="tag">Corporate Assets</span><span class="tag">Real Property</span>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ============================== -->
+  <!-- AMERICAS -->
+  <!-- ============================== -->
+  <div class="continent-section">
+    <div class="continent-header americas">
+      <span class="flag">🌎</span>
+      <div>
+        <h2>The Americas</h2>
+        <p style="margin:0;opacity:.85;font-size:.9rem;">USA · Canada · Mexico · Brazil · Caribbean · Central &amp; South America</p>
+      </div>
+    </div>
+    <div class="country-grid">
+
+      <div class="country-card">
+        <div class="country-name">🇲🇽 Mexico</div>
+        <div class="registry-links">
+          <a href="https://www.banxico.org.mx" target="_blank" rel="noopener">Banxico — Dormant Account Registry</a>
+          <a href="https://www.sat.gob.mx" target="_blank" rel="noopener">SAT — Tax Refunds &amp; Overpayments</a>
+          <a href="https://www.imss.gob.mx" target="_blank" rel="noopener">IMSS — Unclaimed Social Security</a>
+        </div>
+        <div class="asset-tags">
+          <span class="tag">Bank Accounts</span><span class="tag">Land Registry</span>
+        </div>
+      </div>
+
+      <div class="country-card">
+        <div class="country-name">🇧🇷 Brazil</div>
+        <div class="registry-links">
+          <a href="https://valoresareceber.bcb.gov.br" target="_blank" rel="noopener">BCB — Valores a Receber (Money to Receive)</a>
+          <a href="https://www.receita.fazenda.gov.br" target="_blank" rel="noopener">Receita Federal — Tax Refunds (Restituição)</a>
+          <a href="https://www.pgfn.fazenda.gov.br" target="_blank" rel="noopener">PGFN — Federal Unclaimed Funds</a>
+        </div>
+        <div class="asset-tags">
+          <span class="tag">Bank Deposits</span><span class="tag">Tax Refunds</span>
+        </div>
+      </div>
+
+      <div class="country-card">
+        <div class="country-name">🇦🇷 Argentina · 🇨🇱 Chile · 🇨🇴 Colombia</div>
+        <div class="registry-links">
+          <a href="https://www.bcra.gob.ar" target="_blank" rel="noopener">BCRA — Dormant Accounts (Argentina)</a>
+          <a href="https://www.cmfchile.cl" target="_blank" rel="noopener">CMF — Unclaimed Securities (Chile)</a>
+          <a href="https://www.superfinanciera.gov.co" target="_blank" rel="noopener">Superfinanciera — Unclaimed (Colombia)</a>
+        </div>
+        <div class="asset-tags">
+          <span class="tag">South American Estates</span>
+        </div>
+      </div>
+
+      <div class="country-card">
+        <div class="country-name">🇧🇸 Bahamas · 🇰🇾 Cayman Islands · 🇨🇺 Caribbean</div>
+        <div class="registry-links">
+          <a href="https://www.centralbankbahamas.com" target="_blank" rel="noopener">Central Bank Bahamas</a>
+          <a href="https://www.cima.ky" target="_blank" rel="noopener">CIMA — Cayman Islands Monetary Authority</a>
+          <a href="https://www.boj.org.jm" target="_blank" rel="noopener">Bank of Jamaica — Dormant Funds</a>
+        </div>
+        <div class="asset-tags">
+          <span class="tag">Offshore</span><span class="tag">Trust Funds</span><span class="tag">Real Estate</span>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ============================== -->
+  <!-- EUROPE -->
+  <!-- ============================== -->
+  <div class="continent-section">
+    <div class="continent-header europe">
+      <span class="flag">🌍</span>
+      <div>
+        <h2>Europe</h2>
+        <p style="margin:0;opacity:.85;font-size:.9rem;">UK · Germany · France · Switzerland · Netherlands · Spain · Italy · Nordics</p>
+      </div>
+    </div>
+    <div class="country-grid">
+
+      <div class="country-card">
+        <div class="country-name">🇬🇧 United Kingdom</div>
+        <div class="registry-links">
+          <a href="https://www.gov.uk/find-lost-pension" target="_blank" rel="noopener">GOV.UK — Find Lost Pension</a>
+          <a href="https://www.gov.uk/government/collections/bona-vacantia" target="_blank" rel="noopener">Bona Vacantia — Crown Ownerless Property</a>
+          <a href="https://www.nationalarchives.gov.uk/help-with-your-research/research-guides/probate-records/" target="_blank" rel="noopener">National Archives — Probate &amp; Estate Records</a>
+          <a href="https://www.thenbs.gov.uk" target="_blank" rel="noopener">National Savings — Lost Accounts</a>
+          <a href="https://www.mylostnotes.co.uk" target="_blank" rel="noopener">My Lost Account — UK Banks</a>
+        </div>
+        <div class="asset-tags">
+          <span class="tag">Pensions</span><span class="tag">Bona Vacantia</span><span class="tag">Probate</span>
+        </div>
+      </div>
+
+      <div class="country-card">
+        <div class="country-name">🇨🇭 Switzerland</div>
+        <div class="registry-links">
+          <a href="https://www.dormantaccounts.ch" target="_blank" rel="noopener">Swiss Banks — Dormant Accounts</a>
+          <a href="https://www.finma.ch/en/enforcement/dormant-assets/" target="_blank" rel="noopener">FINMA — Dormant Assets Register</a>
+          <a href="https://www.admin.ch/gov/en/start/documentation/media-releases.msg-id-66394.html" target="_blank" rel="noopener">Federal Government — Unclaimed Assets</a>
+        </div>
+        <div class="asset-tags">
+          <span class="tag">WWII Era Assets</span><span class="tag">Dormant Accounts</span>
+        </div>
+      </div>
+
+      <div class="country-card">
+        <div class="country-name">🇩🇪 Germany · 🇦🇹 Austria</div>
+        <div class="registry-links">
+          <a href="https://www.bundesbank.de/en/tasks/banking-supervision/dormant-deposits" target="_blank" rel="noopener">Deutsche Bundesbank — Dormant Deposits</a>
+          <a href="https://www.bundesanzeiger.de" target="_blank" rel="noopener">Bundesanzeiger — Dissolved Company Assets</a>
+          <a href="https://www.oenb.at" target="_blank" rel="noopener">OeNB — Austria Dormant Funds</a>
+        </div>
+        <div class="asset-tags">
+          <span class="tag">WWII Era</span><span class="tag">Corporate</span><span class="tag">Estates</span>
+        </div>
+      </div>
+
+      <div class="country-card">
+        <div class="country-name">🇫🇷 France</div>
+        <div class="registry-links">
+          <a href="https://ciclade.caissedesdepots.fr" target="_blank" rel="noopener">Ciclade — Caisse des Dépôts Unclaimed</a>
+          <a href="https://www.banque-france.fr" target="_blank" rel="noopener">Banque de France — Dormant Accounts</a>
+        </div>
+        <div class="asset-tags">
+          <span class="tag">Bank Deposits</span><span class="tag">Life Insurance</span>
+        </div>
+      </div>
+
+      <div class="country-card">
+        <div class="country-name">🇳🇱 Netherlands · 🇧🇪 Belgium · 🇱🇺 Luxembourg</div>
+        <div class="registry-links">
+          <a href="https://www.dnb.nl/en/consumers/lost-savings" target="_blank" rel="noopener">DNB — Lost Savings Netherlands</a>
+          <a href="https://www.fsma.be" target="_blank" rel="noopener">FSMA Belgium — Dormant Assets</a>
+          <a href="https://www.cssf.lu" target="_blank" rel="noopener">CSSF Luxembourg — Unclaimed Funds</a>
+        </div>
+        <div class="asset-tags">
+          <span class="tag">Offshore Trusts</span><span class="tag">Pension</span>
+        </div>
+      </div>
+
+      <div class="country-card">
+        <div class="country-name">🇸🇪 Sweden · 🇳🇴 Norway · 🇩🇰 Denmark · 🇫🇮 Finland</div>
+        <div class="registry-links">
+          <a href="https://www.riksgalden.se/en/our-operations/national-debt/unclaimed-funds/" target="_blank" rel="noopener">Riksgälden — Sweden Unclaimed Funds</a>
+          <a href="https://www.norges-bank.no/en/topics/notes-and-coins/old-banknotes/" target="_blank" rel="noopener">Norges Bank — Unclaimed Balances</a>
+          <a href="https://www.nfo.dk" target="_blank" rel="noopener">NFO — Denmark Unclaimed Assets</a>
+        </div>
+        <div class="asset-tags">
+          <span class="tag">Nordic Estates</span><span class="tag">Dormant</span>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ============================== -->
+  <!-- AFRICA -->
+  <!-- ============================== -->
+  <div class="continent-section">
+    <div class="continent-header africa">
+      <span class="flag">🌍</span>
+      <div>
+        <h2>Africa</h2>
+        <p style="margin:0;opacity:.85;font-size:.9rem;">South Africa · Nigeria · Kenya · Ghana · Egypt · Morocco &amp; 50+ countries</p>
+      </div>
+    </div>
+    <div class="country-grid">
+
+      <div class="country-card">
+        <div class="country-name">🇿🇦 South Africa</div>
+        <div class="registry-links">
+          <a href="https://www.fsca.co.za/Unclaimed-Benefits" target="_blank" rel="noopener">FSCA — Unclaimed Retirement Benefits</a>
+          <a href="https://www.masterwill.co.za" target="_blank" rel="noopener">Master of High Court — Deceased Estates</a>
+          <a href="https://www.sars.gov.za" target="_blank" rel="noopener">SARS — Tax Refunds</a>
+        </div>
+        <div class="asset-tags">
+          <span class="tag">Pension</span><span class="tag">Deceased Estates</span><span class="tag">Mining Rights</span>
+        </div>
+      </div>
+
+      <div class="country-card">
+        <div class="country-name">🇳🇬 Nigeria · 🇬🇭 Ghana · 🇰🇪 Kenya</div>
+        <div class="registry-links">
+          <a href="https://www.cbn.gov.ng" target="_blank" rel="noopener">CBN — Central Bank Nigeria Unclaimed</a>
+          <a href="https://www.bog.gov.gh" target="_blank" rel="noopener">Bank of Ghana — Dormant Accounts</a>
+          <a href="https://www.centralbank.go.ke" target="_blank" rel="noopener">CBK — Kenya Dormant Funds</a>
+        </div>
+        <div class="asset-tags">
+          <span class="tag">Oil &amp; Gas Rights</span><span class="tag">Mining Claims</span>
+        </div>
+      </div>
+
+      <div class="country-card">
+        <div class="country-name">🇪🇬 Egypt · 🇲🇦 Morocco · 🇿🇦 Other Africa</div>
+        <div class="registry-links">
+          <a href="https://www.cbe.org.eg" target="_blank" rel="noopener">CBE — Central Bank Egypt</a>
+          <a href="https://www.bkam.ma" target="_blank" rel="noopener">Bank Al-Maghrib — Morocco Dormant</a>
+          <a href="https://list-property.html">List an African Asset on PRA →</a>
+        </div>
+        <div class="asset-tags">
+          <span class="tag">Real Estate</span><span class="tag">Resource Rights</span>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ============================== -->
+  <!-- MIDDLE EAST -->
+  <!-- ============================== -->
+  <div class="continent-section">
+    <div class="continent-header mideast">
+      <span class="flag">🕌</span>
+      <div>
+        <h2>Middle East &amp; Central Asia</h2>
+        <p style="margin:0;opacity:.85;font-size:.9rem;">UAE · Saudi Arabia · Israel · Turkey · Gulf States &amp; Central Asia</p>
+      </div>
+    </div>
+    <div class="country-grid">
+
+      <div class="country-card">
+        <div class="country-name">🇦🇪 UAE · 🇶🇦 Qatar · 🇧🇭 Bahrain</div>
+        <div class="registry-links">
+          <a href="https://www.centralbank.ae" target="_blank" rel="noopener">CBUAE — UAE Dormant Accounts</a>
+          <a href="https://www.qcb.gov.qa" target="_blank" rel="noopener">QCB — Qatar Unclaimed Assets</a>
+          <a href="https://www.cbb.gov.bh" target="_blank" rel="noopener">CBB — Bahrain Unclaimed Funds</a>
+        </div>
+        <div class="asset-tags">
+          <span class="tag">Real Estate</span><span class="tag">Oil Rights</span><span class="tag">Trust Funds</span>
+        </div>
+      </div>
+
+      <div class="country-card">
+        <div class="country-name">🇸🇦 Saudi Arabia · 🇰🇼 Kuwait · 🇴🇲 Oman</div>
+        <div class="registry-links">
+          <a href="https://www.sama.gov.sa" target="_blank" rel="noopener">SAMA — Saudi Unclaimed Accounts</a>
+          <a href="https://www.cbk.gov.kw" target="_blank" rel="noopener">CBK — Kuwait Dormant Funds</a>
+          <a href="https://www.cbo.gov.om" target="_blank" rel="noopener">CBO — Oman Dormant Deposits</a>
+        </div>
+        <div class="asset-tags">
+          <span class="tag">Oil &amp; Gas</span><span class="tag">Real Property</span>
+        </div>
+      </div>
+
+      <div class="country-card">
+        <div class="country-name">🇮🇱 Israel · 🇹🇷 Turkey</div>
+        <div class="registry-links">
+          <a href="https://www.bank-otzar.co.il" target="_blank" rel="noopener">Bank of Israel — Dormant Accounts</a>
+          <a href="https://www.tcmb.gov.tr" target="_blank" rel="noopener">TCMB — Turkey Central Bank</a>
+          <a href="https://www.masav.co.il" target="_blank" rel="noopener">MASAV — Israel Lost Accounts Search</a>
+        </div>
+        <div class="asset-tags">
+          <span class="tag">WWII Restitution</span><span class="tag">Estates</span>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- BOTTOM CTA -->
+  <div class="cta-card" style="margin-top:48px;">
+    <h3>🌅 The Sun Never Sets on Pacific Rim Auctions</h3>
+    <p style="opacity:.85;max-width:620px;margin:0 auto 20px;">2,500 nodes are operating right now — following the sun across every time zone, every continent, every country. Found a zombie asset, dormant account, or unclaimed property? We connect it to buyers globally.</p>
+    <div style="display:flex;justify-content:center;gap:16px;flex-wrap:wrap;">
+      <a href="list-property.html" style="background:var(--gold);color:#1a1a1a;padding:12px 28px;border-radius:8px;font-weight:700;text-decoration:none;">List Your Asset →</a>
+      <a href="listings.html" style="background:rgba(255,255,255,.15);color:white;padding:12px 28px;border-radius:8px;font-weight:700;text-decoration:none;border:2px solid rgba(255,255,255,.4);">Browse All Auctions</a>
+    </div>
+  </div>
+
+</div>
+
+<!-- FOOTER -->
+<footer class="footer">
+  <div class="container">
+    <div class="footer-grid">
+      <div class="footer-brand">
+        <span class="logo-wave">🌊</span>
+        <span class="footer-logo-text">Pacific Rim <strong>Auctions</strong></span>
+        <p style="margin-top:8px;font-size:.85rem;opacity:.8;">Pacific Rim Auctions LLC<br/>Terra Roots Global Realty Solutions LLC</p>
+        <p style="font-size:.8rem;opacity:.7;margin-top:6px;">2,500 Nodes · 249 Countries · 6 Continents</p>
+      </div>
+      <div class="footer-links">
+        <h4>Platform</h4>
+        <a href="listings.html">Live Auctions</a>
+        <a href="find-assets.html">Find Assets</a>
+        <a href="list-property.html">List Asset</a>
+        <a href="notes-marketplace.html">Notes Market</a>
+      </div>
+      <div class="footer-links">
+        <h4>Legal</h4>
+        <a href="#">Terms of Use</a>
+        <a href="#">Privacy Policy</a>
+        <a href="#">Seller Rules</a>
+        <a href="#">All-Country Compliance</a>
+      </div>
+    </div>
+    <p>© 2026 Pacific Rim Auctions · Pacific Rim Auctions LLC · Terra Roots Global Realty Solutions LLC · All Rights Reserved</p>
+    <p>Marketing platform only. No legal ties to buyer/seller transactions. All transactions subject to laws of the land in all jurisdictions. Do no harm.</p>
+  </div>
+</footer>
+
+</body>
+</html>
