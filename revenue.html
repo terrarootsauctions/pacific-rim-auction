@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Revenue Model — Pacific Rim Auctions</title>
+<style>
+  :root{
+    --ocean:#0a3d6b;--gold:#f0c040;--green:#2e7d32;--light:#f8fafc;
+    --font-serif:'Georgia',serif;--font-sans:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:var(--font-sans);background:var(--light);color:#1f2937;}
+
+  /* NAV */
+  nav{background:var(--ocean);padding:14px 24px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;}
+  .logo{display:flex;align-items:center;gap:10px;text-decoration:none;}
+  .logo-wave{font-size:1.5rem;}
+  .logo-text{color:white;font-family:var(--font-serif);font-size:1.1rem;font-weight:700;}
+  .nav-links{display:flex;gap:20px;list-style:none;align-items:center;}
+  .nav-links a{color:rgba(255,255,255,.85);text-decoration:none;font-size:.9rem;}
+  .nav-links a:hover{color:white;}
+  .btn{padding:8px 18px;border-radius:6px;font-weight:600;font-size:.85rem;text-decoration:none;display:inline-block;}
+  .btn-outline{border:1.5px solid rgba(255,255,255,.6);color:white;}
+  .btn-primary{background:var(--gold);color:#0a1628;}
+
+  /* MANDATE BANNER */
+  .mandate{background:linear-gradient(90deg,#0a1628,#0a3d6b,#0a1628);color:white;text-align:center;padding:16px 24px;border-bottom:3px solid var(--gold);}
+  .mandate strong{color:var(--gold);}
+
+  /* TICKER */
+  .ticker{background:#0a1628;color:rgba(255,255,255,.75);overflow:hidden;white-space:nowrap;padding:7px 0;font-size:.78rem;}
+  .ticker-inner{display:inline-block;animation:ticker 40s linear infinite;}
+  @keyframes ticker{from{transform:translateX(100vw);}to{transform:translateX(-100%);}}
+
+  /* PAGE HEADER */
+  .page-header{background:linear-gradient(135deg,#0a1628,#0a3d6b);color:white;padding:48px 24px;text-align:center;}
+  .page-header h1{font-family:var(--font-serif);font-size:2.2rem;margin-bottom:10px;}
+  .page-header p{color:rgba(255,255,255,.75);font-size:1rem;max-width:600px;margin:0 auto;}
+
+  .container{max-width:1080px;margin:0 auto;padding:0 24px;}
+  .section{padding:56px 0;}
+
+  /* REVENUE CARDS */
+  .rev-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:20px;margin-bottom:40px;}
+  .rev-card{background:white;border-radius:12px;padding:24px;text-align:center;box-shadow:0 2px 8px rgba(0,0,0,.06);border:1px solid #e5e7eb;}
+  .rev-card .num{font-size:2rem;font-weight:800;font-family:var(--font-serif);}
+  .rev-card .label{font-size:.82rem;color:#6b7280;margin-top:4px;}
+  .rev-card .note{font-size:.75rem;color:#9ca3af;margin-top:8px;}
+  .gold{color:var(--gold);}
+  .green{color:var(--green);}
+  .ocean{color:var(--ocean);}
+
+  /* FEE TABLE */
+  .fee-table{width:100%;border-collapse:collapse;background:white;border-radius:12px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.06);}
+  .fee-table th{background:var(--ocean);color:white;padding:14px 18px;text-align:left;font-size:.88rem;}
+  .fee-table td{padding:14px 18px;border-bottom:1px solid #f3f4f6;font-size:.9rem;}
+  .fee-table tr:last-child td{border-bottom:none;}
+  .fee-table tr:hover td{background:#f8fafc;}
+  .badge{display:inline-block;padding:3px 10px;border-radius:20px;font-size:.75rem;font-weight:600;}
+  .badge-gold{background:#fef3c7;color:#92400e;}
+  .badge-blue{background:#dbeafe;color:#1e40af;}
+  .badge-green{background:#d1fae5;color:#065f46;}
+
+  /* PHASE TABLE */
+  .phase-block{background:white;border-radius:12px;padding:28px;margin-bottom:24px;box-shadow:0 2px 8px rgba(0,0,0,.06);border-left:4px solid var(--ocean);}
+  .phase-block.phase2{border-left-color:var(--green);}
+  .phase-block.phase3{border-left-color:var(--gold);}
+  .phase-title{font-family:var(--font-serif);font-size:1.2rem;color:var(--ocean);margin-bottom:6px;}
+  .phase-block.phase2 .phase-title{color:var(--green);}
+  .phase-block.phase3 .phase-title{color:#92400e;}
+
+  .metric-row{display:flex;flex-wrap:wrap;gap:16px;margin-top:16px;}
+  .metric{flex:1;min-width:140px;background:#f8fafc;border-radius:8px;padding:14px 16px;}
+  .metric .mval{font-size:1.4rem;font-weight:800;font-family:var(--font-serif);}
+  .metric .mlabel{font-size:.75rem;color:#6b7280;margin-top:3px;}
+
+  /* ASSET CATEGORY REVENUE */
+  .cat-table{width:100%;border-collapse:collapse;}
+  .cat-table th{background:#f1f5f9;padding:10px 14px;text-align:left;font-size:.82rem;color:#374151;font-weight:600;}
+  .cat-table td{padding:10px 14px;border-bottom:1px solid #f3f4f6;font-size:.85rem;}
+  .cat-table tr:last-child td{border-bottom:none;font-weight:700;background:#fef9f0;}
+
+  /* FLOW DIAGRAM */
+  .flow{display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:8px;margin:32px 0;}
+  .flow-box{background:white;border:2px solid var(--ocean);border-radius:10px;padding:16px 20px;text-align:center;min-width:140px;}
+  .flow-box strong{display:block;font-size:.9rem;color:var(--ocean);}
+  .flow-box span{font-size:.78rem;color:#6b7280;margin-top:4px;display:block;}
+  .flow-arrow{font-size:1.5rem;color:#9ca3af;}
+
+  /* FOOTER */
+  footer{background:#0a1628;color:rgba(255,255,255,.65);text-align:center;padding:24px;font-size:.78rem;}
+  footer strong{color:white;}
+</style>
+</head>
+<body>
+
+<nav>
+  <a href="index.html" class="logo"><span class="logo-wave">🌊</span><span class="logo-text">Pacific Rim <strong>Auctions</strong></span></a>
+  <ul class="nav-links">
+    <li><a href="listings.html">Auctions</a></li>
+    <li><a href="find-assets.html">Find Assets</a></li>
+    <li><a href="notes-marketplace.html">Notes</a></li>
+    <li><a href="list-property.html" class="btn btn-outline">List Asset</a></li>
+    <li><a href="register.html" class="btn btn-primary">Register to Bid</a></li>
+  </ul>
+</nav>
+
+<div class="mandate">
+  <strong>Absolute Mandate:</strong> To <strong>Do No Harm</strong> · To <strong>Follow the Laws of the Land</strong> — 6 Continents · 249 Countries · No Exceptions · Always
+</div>
+
+<div class="ticker">
+  <div class="ticker-inner">
+    🌅 Following the Sun &nbsp;·&nbsp; 249 Countries · 6 Continents · 2,500 Nodes &nbsp;·&nbsp; First in the Door &nbsp;·&nbsp; 3–5% Commission on Every Closing &nbsp;·&nbsp; All Asset Classes &nbsp;·&nbsp; 196 Years of Dormant Assets &nbsp;·&nbsp; World2II · Westlaw · LexisNexis · SI Human in the Loop &nbsp;·&nbsp;
+    🌅 Following the Sun &nbsp;·&nbsp; 249 Countries · 6 Continents · 2,500 Nodes &nbsp;·&nbsp; First in the Door &nbsp;·&nbsp; 3–5% Commission on Every Closing &nbsp;·&nbsp; All Asset Classes &nbsp;·&nbsp; 196 Years of Dormant Assets &nbsp;·&nbsp; World2II · Westlaw · LexisNexis · SI Human in the Loop &nbsp;·&nbsp;
+  </div>
+</div>
+
+<div class="page-header">
+  <h1>Revenue Engine</h1>
+  <p>3–5% commission on every closing. 249 countries. 2,500 nodes. The platform never stops collecting.</p>
+</div>
+
+<!-- KEY METRICS -->
+<section class="section" style="background:var(--ocean);padding:36px 0;">
+  <div class="container">
+    <div class="rev-grid">
+      <div class="rev-card" style="background:rgba(255,255,255,.08);border-color:rgba(255,255,255,.15);color:white;">
+        <div class="num gold">3–5%</div>
+        <div class="label" style="color:rgba(255,255,255,.7);">Commission on Every Closing</div>
+        <div class="note" style="color:rgba(255,255,255,.5);">Sliding scale by asset value</div>
+      </div>
+      <div class="rev-card" style="background:rgba(255,255,255,.08);border-color:rgba(255,255,255,.15);color:white;">
+        <div class="num gold">$200–$1K</div>
+        <div class="label" style="color:rgba(255,255,255,.7);">Listing Fee Per Asset</div>
+        <div class="note" style="color:rgba(255,255,255,.5);">Basic / Standard / Premium</div>
+      </div>
+      <div class="rev-card" style="background:rgba(255,255,255,.08);border-color:rgba(255,255,255,.15);color:white;">
+        <div class="num gold">2,500</div>
+        <div class="label" style="color:rgba(255,255,255,.7);">Active Nodes</div>
+        <div class="note" style="color:rgba(255,255,255,.5);">Following the sun, 24/7</div>
+      </div>
+      <div class="rev-card" style="background:rgba(255,255,255,.08);border-color:rgba(255,255,255,.15);color:white;">
+        <div class="num gold">196</div>
+        <div class="label" style="color:rgba(255,255,255,.7);">Years of Dormant Assets</div>
+        <div class="note" style="color:rgba(255,255,255,.5);">Back to 1830 — all categories</div>
+      </div>
+      <div class="rev-card" style="background:rgba(255,255,255,.08);border-color:rgba(255,255,255,.15);color:white;">
+        <div class="num gold">$0</div>
+        <div class="label" style="color:rgba(255,255,255,.7);">Platform Legal Liability</div>
+        <div class="note" style="color:rgba(255,255,255,.5);">Marketing platform only — no transactional ties</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- MONEY FLOW -->
+<section class="section">
+  <div class="container">
+    <h2 style="font-family:var(--font-serif);font-size:1.7rem;color:var(--ocean);text-align:center;margin-bottom:8px;">How the Money Moves</h2>
+    <p style="text-align:center;color:#6b7280;margin-bottom:32px;">All monies deposited directly to account. No intermediaries.</p>
+
+    <div class="flow">
+      <div class="flow-box">
+        <strong>Seller Lists Asset</strong>
+        <span>$200–$1,000 listing fee<br/>→ Direct to Kauai FCU</span>
+      </div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-box">
+        <strong>Auction Runs</strong>
+        <span>SI monitors bids<br/>World2II · Westlaw · LexisNexis</span>
+      </div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-box">
+        <strong>Asset Closes</strong>
+        <span>3–5% of closing cost<br/>→ Direct to Kauai FCU</span>
+      </div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-box" style="border-color:#2e7d32;">
+        <strong style="color:#2e7d32;">Terra Roots Closes</strong>
+        <span>Physical properties placed<br/>with Terra Roots for sale</span>
+      </div>
+    </div>
+
+    <div style="background:#fef9f0;border:2px solid var(--gold);border-radius:12px;padding:20px 28px;max-width:700px;margin:0 auto;text-align:center;">
+      <div style="font-weight:700;color:#92400e;margin-bottom:6px;">Direct Deposit · No Middlemen</div>
+      <div style="font-size:.88rem;color:#78350f;line-height:1.7;">
+        Listing fees: Zelle to <strong>1.aeroponic@gmail.com</strong> or ACH wire to <strong>Kauai FCU · Routing 321379915</strong><br/>
+        Commission on closings: direct settlement, same rails. Platform never holds funds.
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FEE STRUCTURE -->
+<section class="section" style="background:#f1f5f9;">
+  <div class="container">
+    <h2 style="font-family:var(--font-serif);font-size:1.7rem;color:var(--ocean);text-align:center;margin-bottom:32px;">Fee Structure</h2>
+    <div style="overflow-x:auto;">
+      <table class="fee-table">
+        <thead>
+          <tr>
+            <th>Listing Tier</th>
+            <th>Listing Fee</th>
+            <th>Commission on Closing</th>
+            <th>Includes</th>
+            <th>Best For</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>Basic</strong> <span class="badge badge-blue">Starter</span></td>
+            <td><strong>$200</strong></td>
+            <td>5% of closing cost</td>
+            <td>Standard listing, 30-day auction window</td>
+            <td>Dormant accounts, unclaimed bonds, small assets</td>
+          </tr>
+          <tr>
+            <td><strong>Standard</strong> <span class="badge badge-gold">Popular</span></td>
+            <td><strong>$500</strong></td>
+            <td>4% of closing cost</td>
+            <td>Featured placement, 60-day auction, SI-assisted pricing</td>
+            <td>Real estate, vehicles, collectibles, IP</td>
+          </tr>
+          <tr>
+            <td><strong>Premium</strong> <span class="badge badge-green">High Value</span></td>
+            <td><strong>$1,000</strong></td>
+            <td>3% of closing cost</td>
+            <td>Priority placement, global node distribution, legal verification</td>
+            <td>Luxury assets, mining claims, portfolios, high-value estates</td>
+          </tr>
+          <tr>
+            <td><strong>Notes Marketplace</strong></td>
+            <td><strong>$500</strong></td>
+            <td>3.5% of note value at sale</td>
+            <td>2,500-node exposure, performing &amp; non-performing</td>
+            <td>Mortgage notes, seller-financed notes, distressed debt</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- REVENUE BY ASSET CATEGORY -->
+<section class="section">
+  <div class="container">
+    <h2 style="font-family:var(--font-serif);font-size:1.7rem;color:var(--ocean);text-align:center;margin-bottom:8px;">Revenue by Asset Category</h2>
+    <p style="text-align:center;color:#6b7280;margin-bottom:32px;">Conservative estimates at 3.5% average commission, modest deal volume per month at scale.</p>
+
+    <div style="overflow-x:auto;">
+      <table class="cat-table" style="background:white;border-radius:12px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.06);">
+        <thead>
+          <tr>
+            <th>Asset Category</th>
+            <th>Avg Deal Value</th>
+            <th>Est. Deals/Month (Scale)</th>
+            <th>Commission Rate</th>
+            <th>Monthly Revenue</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>🏘️ Real Estate (Zombie Properties)</td>
+            <td>$350,000</td>
+            <td>80</td>
+            <td>3.5%</td>
+            <td><strong>$980,000</strong></td>
+          </tr>
+          <tr>
+            <td>💰 Dormant Bank Accounts / Financial</td>
+            <td>$22,000</td>
+            <td>500</td>
+            <td>5%</td>
+            <td><strong>$550,000</strong></td>
+          </tr>
+          <tr>
+            <td>📜 Notes Marketplace</td>
+            <td>$150,000</td>
+            <td>80</td>
+            <td>3.5%</td>
+            <td><strong>$420,000</strong></td>
+          </tr>
+          <tr>
+            <td>⛏️ Mining / Natural Resources</td>
+            <td>$800,000</td>
+            <td>15</td>
+            <td>3%</td>
+            <td><strong>$360,000</strong></td>
+          </tr>
+          <tr>
+            <td>🛥️ Luxury Assets (Yachts, Aircraft, Autos)</td>
+            <td>$600,000</td>
+            <td>15</td>
+            <td>3.5%</td>
+            <td><strong>$315,000</strong></td>
+          </tr>
+          <tr>
+            <td>🎨 Art, Jewelry &amp; Collectibles</td>
+            <td>$75,000</td>
+            <td>100</td>
+            <td>4%</td>
+            <td><strong>$300,000</strong></td>
+          </tr>
+          <tr>
+            <td>💼 IP / Patents / Intangibles</td>
+            <td>$250,000</td>
+            <td>20</td>
+            <td>4%</td>
+            <td><strong>$200,000</strong></td>
+          </tr>
+          <tr>
+            <td>🚗 Transportation (Vehicles, Vessels)</td>
+            <td>$45,000</td>
+            <td>120</td>
+            <td>4%</td>
+            <td><strong>$216,000</strong></td>
+          </tr>
+          <tr>
+            <td>🏗️ Commercial &amp; Industrial</td>
+            <td>$1,200,000</td>
+            <td>10</td>
+            <td>3%</td>
+            <td><strong>$360,000</strong></td>
+          </tr>
+          <tr>
+            <td>📦 Other / Misc Assets</td>
+            <td>$15,000</td>
+            <td>200</td>
+            <td>5%</td>
+            <td><strong>$150,000</strong></td>
+          </tr>
+          <tr style="background:#fef9f0;">
+            <td><strong>TOTAL — At Scale</strong></td>
+            <td></td>
+            <td><strong>1,140 deals/mo</strong></td>
+            <td><strong>~3.8% blended</strong></td>
+            <td><strong style="font-size:1.1rem;color:var(--green);">$3,851,000/mo</strong></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <p style="text-align:center;color:#9ca3af;font-size:.78rem;margin-top:12px;">Plus listing fees: 1,140 listings × avg $500 = $570,000/mo additional upfront revenue</p>
+  </div>
+</section>
+
+<!-- PHASE PROJECTIONS -->
+<section class="section" style="background:#f1f5f9;">
+  <div class="container">
+    <h2 style="font-family:var(--font-serif);font-size:1.7rem;color:var(--ocean);text-align:center;margin-bottom:32px;">Phased Revenue Projections</h2>
+
+    <div class="phase-block">
+      <div class="phase-title">Phase 1 — Launch &amp; Pacific (Months 1–3)</div>
+      <p style="font-size:.88rem;color:#6b7280;">Hawaii, Australia, New Zealand, Canada. English-speaking Pacific. First 2,500 nodes activated. Seeding dormant asset pipeline.</p>
+      <div class="metric-row">
+        <div class="metric"><div class="mval ocean">$200K</div><div class="mlabel">Listing Fees / Month</div></div>
+        <div class="metric"><div class="mval ocean">$450K</div><div class="mlabel">Commission Revenue / Month</div></div>
+        <div class="metric"><div class="mval ocean">$650K</div><div class="mlabel">Total / Month</div></div>
+        <div class="metric"><div class="mval ocean">$1.95M</div><div class="mlabel">3-Month Total</div></div>
+      </div>
+    </div>
+
+    <div class="phase-block phase2">
+      <div class="phase-title">Phase 2 — Asia-Pacific + Americas (Months 4–8)</div>
+      <p style="font-size:.88rem;color:#6b7280;">Japan, Singapore, South Korea, Hong Kong, Philippines, Indonesia. Brazil, Mexico, Argentina. 196-year dormant asset pipeline fully seeded. Notes marketplace running.</p>
+      <div class="metric-row">
+        <div class="metric"><div class="mval green">$400K</div><div class="mlabel">Listing Fees / Month</div></div>
+        <div class="metric"><div class="mval green">$1.4M</div><div class="mlabel">Commission Revenue / Month</div></div>
+        <div class="metric"><div class="mval green">$1.8M</div><div class="mlabel">Total / Month</div></div>
+        <div class="metric"><div class="mval green">$9M</div><div class="mlabel">5-Month Total</div></div>
+      </div>
+    </div>
+
+    <div class="phase-block phase3">
+      <div class="phase-title">Phase 3 — Global Full Deployment (Months 9–12)</div>
+      <p style="font-size:.88rem;color:#6b7280;">Europe, Africa, Middle East fully online. All 249 countries. All 2,500 nodes at full capacity. Self-improving SI at peak efficiency.</p>
+      <div class="metric-row">
+        <div class="metric"><div class="mval" style="color:#92400e;">$570K</div><div class="mlabel">Listing Fees / Month</div></div>
+        <div class="metric"><div class="mval" style="color:#92400e;">$3.85M</div><div class="mlabel">Commission Revenue / Month</div></div>
+        <div class="metric"><div class="mval" style="color:#92400e;">$4.42M</div><div class="mlabel">Total / Month</div></div>
+        <div class="metric"><div class="mval" style="color:#92400e;">$17.7M</div><div class="mlabel">4-Month Total</div></div>
+      </div>
+    </div>
+
+    <!-- ANNUAL SUMMARY -->
+    <div style="background:linear-gradient(135deg,#0a1628,#0a3d6b);color:white;border-radius:16px;padding:36px;text-align:center;margin-top:32px;">
+      <div style="font-family:var(--font-serif);font-size:1.3rem;color:var(--gold);margin-bottom:16px;">Year 1 Total Revenue Projection</div>
+      <div style="font-size:3rem;font-weight:900;font-family:var(--font-serif);color:var(--gold);">$28.65M</div>
+      <div style="color:rgba(255,255,255,.7);margin-top:8px;font-size:.9rem;">All 3 phases combined · 249 countries · All asset categories</div>
+      <div style="display:flex;justify-content:center;gap:48px;margin-top:24px;flex-wrap:wrap;">
+        <div><div style="font-size:1.5rem;font-weight:800;">$5.2M</div><div style="font-size:.78rem;color:rgba(255,255,255,.6);">Listing Fees (Year 1)</div></div>
+        <div><div style="font-size:1.5rem;font-weight:800;">$23.45M</div><div style="font-size:.78rem;color:rgba(255,255,255,.6);">Commission Revenue (Year 1)</div></div>
+        <div><div style="font-size:1.5rem;font-weight:800;">100%</div><div style="font-size:.78rem;color:rgba(255,255,255,.6);">Direct to Kauai FCU</div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- DORMANT ASSET OPPORTUNITY -->
+<section class="section">
+  <div class="container">
+    <h2 style="font-family:var(--font-serif);font-size:1.7rem;color:var(--ocean);text-align:center;margin-bottom:8px;">The Dormant Asset Opportunity</h2>
+    <p style="text-align:center;color:#6b7280;margin-bottom:32px;">This is the long game. The real inventory.</p>
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:20px;">
+      <div style="background:white;border-radius:12px;padding:24px;border:1px solid #e5e7eb;box-shadow:0 2px 8px rgba(0,0,0,.04);">
+        <div style="font-size:1.8rem;margin-bottom:10px;">🏦</div>
+        <div style="font-weight:700;color:var(--ocean);margin-bottom:6px;">Global Dormant Bank Deposits</div>
+        <div style="font-size:1.5rem;font-weight:800;color:var(--green);">$65–100T</div>
+        <div style="font-size:.78rem;color:#9ca3af;margin-top:4px;">Estimated worldwide. Source: World Bank / BIS estimates.</div>
+      </div>
+      <div style="background:white;border-radius:12px;padding:24px;border:1px solid #e5e7eb;box-shadow:0 2px 8px rgba(0,0,0,.04);">
+        <div style="font-size:1.8rem;margin-bottom:10px;">🏘️</div>
+        <div style="font-weight:700;color:var(--ocean);margin-bottom:6px;">Zombie Properties (USA alone)</div>
+        <div style="font-size:1.5rem;font-weight:800;color:var(--green);">300,000+</div>
+        <div style="font-size:.78rem;color:#9ca3af;margin-top:4px;">Foreclosed but never resold. Source: ATTOM Data Solutions.</div>
+      </div>
+      <div style="background:white;border-radius:12px;padding:24px;border:1px solid #e5e7eb;box-shadow:0 2px 8px rgba(0,0,0,.04);">
+        <div style="font-size:1.8rem;margin-bottom:10px;">📜</div>
+        <div style="font-weight:700;color:var(--ocean);margin-bottom:6px;">Unclaimed Assets (US NAUPA)</div>
+        <div style="font-size:1.5rem;font-weight:800;color:var(--green);">$58B+</div>
+        <div style="font-size:.78rem;color:#9ca3af;margin-top:4px;">Held by US states alone. Source: NAUPA 2024 data.</div>
+      </div>
+      <div style="background:white;border-radius:12px;padding:24px;border:1px solid #e5e7eb;box-shadow:0 2px 8px rgba(0,0,0,.04);">
+        <div style="font-size:1.8rem;margin-bottom:10px;">⛏️</div>
+        <div style="font-weight:700;color:var(--ocean);margin-bottom:6px;">Abandoned Mining Claims</div>
+        <div style="font-size:1.5rem;font-weight:800;color:var(--green);">500,000+</div>
+        <div style="font-size:.78rem;color:#9ca3af;margin-top:4px;">Globally, gold/silver/lithium/diamond. Source: Global Mining Review.</div>
+      </div>
+    </div>
+    <div style="background:#f0fdf4;border:2px solid #bbf7d0;border-radius:12px;padding:20px 28px;max-width:680px;margin:28px auto 0;text-align:center;">
+      <div style="font-weight:700;color:#065f46;margin-bottom:6px;">Pacific Rim Auctions is positioned as the world's first true global dormant asset marketplace.</div>
+      <div style="font-size:.85rem;color:#047857;line-height:1.7;">First in the door. Following the sun. 2,500 nodes collecting continuously. 196 years of inventory waiting to be unlocked.</div>
+    </div>
+  </div>
+</section>
+
+<!-- LIST YOUR ASSET CTA -->
+<section style="background:var(--ocean);padding:48px 24px;text-align:center;">
+  <div class="container">
+    <h2 style="font-family:var(--font-serif);font-size:1.8rem;color:white;margin-bottom:12px;">Start Generating Revenue</h2>
+    <p style="color:rgba(255,255,255,.75);margin-bottom:24px;font-size:1rem;">List your first asset and enter the pipeline.</p>
+    <a href="list-property.html" style="background:var(--gold);color:#0a1628;padding:14px 36px;border-radius:8px;font-weight:700;font-size:1rem;text-decoration:none;display:inline-block;">List Your Asset Now</a>
+  </div>
+</section>
+
+<footer>
+  <p><strong>Pacific Rim Auctions</strong> · Pacific Rim Auctions LLC · Terra Roots Global Realty Solutions LLC</p>
+  <p style="margin-top:6px;">Marketing platform only. No legal ties to buyer/seller transactions. All transactions subject to laws of the land in all jurisdictions. Do No Harm — Absolute Mandate.</p>
+  <p style="margin-top:6px;">World2II · Westlaw · LexisNexis · SI Human in the Loop · Headless · Self-Healing · Self-Improving</p>
+</footer>
+
+</body>
+</html>
