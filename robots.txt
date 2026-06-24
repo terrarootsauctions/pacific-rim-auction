@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://terrarootsauctions.github.io/pacific-rim-auction/sitemap.xml
