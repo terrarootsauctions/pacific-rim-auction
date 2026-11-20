@@ -29,7 +29,6 @@ CREATE TABLE users (
   country TEXT,
   buyer_type TEXT,
   kyc_status TEXT DEFAULT 'pending' CHECK (kyc_status IN ('pending','verified','flagged','rejected')),
-  stripe_customer_id TEXT,
   registered_at TIMESTAMPTZ DEFAULT NOW(),
   last_active TIMESTAMPTZ
 );
@@ -53,7 +52,7 @@ CREATE TABLE properties (
   reserve_price NUMERIC,
   listing_package TEXT CHECK (listing_package IN ('standard','premium','luxury')),
   listing_fee_paid BOOLEAN DEFAULT FALSE,
-  stripe_payment_intent TEXT,
+  payment_reference TEXT,
   status TEXT DEFAULT 'pending_review' CHECK (status IN (
     'pending_review','approved','active','paused','sold','withdrawn','expired'
   )),
