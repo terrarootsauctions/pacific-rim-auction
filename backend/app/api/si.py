@@ -5,7 +5,7 @@ from app.core.database import get_db
 from app.core.deps import get_current_user
 from app.models.enums import UserRole
 from app.models.user import User
-from app.services import si_orchestrator
+from app.services import follow_the_sun, resilience, si_orchestrator
 
 router = APIRouter(prefix="/si", tags=["si-orchestrator"])
 
@@ -37,3 +37,20 @@ def get_stalled_assets(db: Session = Depends(get_db), admin: User = Depends(requ
 @router.get("/pending-inspections")
 def get_pending_inspections(db: Session = Depends(get_db), admin: User = Depends(require_admin)):
     return si_orchestrator.pending_inspection_report(db)
+
+
+@router.get("/follow-the-sun")
+def get_follow_the_sun(db: Session = Depends(get_db), admin: User = Depends(require_admin)):
+    """Which legally cleared countries are in daytime right now, which are
+    asleep and when they wake. Only ACTIVE (reviewed) countries are counted."""
+    try:
+        return follow_the_sun.follow_the_sun_report(db)
+    except follow_the_sun.TimeZoneDataError as exc:
+        raise HTTPException(status_code=503, detail=str(exc))
+
+
+@router.get("/resilience")
+def get_resilience(admin: User = Depends(require_admin)):
+    """State of every circuit breaker (closed = healthy, open = a service is
+    failing and calls are paused, half_open = testing recovery)."""
+    return resilience.all_snapshots()

@@ -32,7 +32,7 @@ from app.models.enums import AssetStatus, InspectionStatus, TransactionStatus
 from app.models.jurisdiction_node import JurisdictionNode, NodeStatus
 from app.models.listing import Inspection, Listing
 from app.models.transaction import Transaction
-from app.services import outreach, payments
+from app.services import follow_the_sun, outreach, payments, resilience
 
 
 def system_health_report(db: Session) -> dict:
@@ -43,6 +43,7 @@ def system_health_report(db: Session) -> dict:
         "bank": _check_bank(),
         "reply_io": _check_reply_io(),
         "database": _check_database(db),
+        "circuit_breakers": resilience.all_snapshots(),
         "note": "This report reflects only the systems already integrated "
         "into the codebase. Nothing here is inferred or projected.",
     }
@@ -219,6 +220,7 @@ def full_architect_briefing(db: Session) -> dict:
         "stalled_assets": stalled_assets_report(db),
         "pending_inspections": pending_inspection_report(db),
         "jurisdiction_coverage": jurisdiction_node_coverage(db),
+        "follow_the_sun": follow_the_sun.follow_the_sun_report(db),
         "failed_jurisdiction_checks": failed_jurisdiction_checks_report(db),
         "revenue": real_revenue_summary(db),
         "reminder": "SI does not act on any of this. The architect decides.",

@@ -16,6 +16,8 @@ A headless API serving three entities: Pacific Rim Auctions (umbrella), Pacific 
 - Keeps a permanent, append-only audit log of every consequential action.
 - Reapplies earlier human compliance decisions only on an exact match (same country, region, reason and source). Anything else goes to a human.
 - Supports outreach (sellers, agents, buyer follow-up) through Reply.io.
+- **Follows the sun:** `GET /api/v1/si/follow-the-sun` shows which legally cleared countries are in daytime right now and when the others wake, using the IANA time zone database. Only countries whose jurisdiction node is `ACTIVE` are counted.
+- **Heals itself:** outbound calls (Reply.io) retry temporary failures with growing waits, and a circuit breaker pauses a failing service and tests recovery on its own. `GET /api/v1/si/resilience` shows every breaker's state.
 - Reports system status and real revenue through the SI briefing endpoint.
 
 ## What it deliberately does NOT do
@@ -68,17 +70,28 @@ How money flows:
 4. If the amount and currency match the fee, the transaction becomes `FEE_COLLECTED` and a balanced ledger entry (BANK_CASH / REVENUE) is written. Each bank event is processed once, so duplicates never double-count.
 5. A credit with no matching reference, or the wrong amount, is recorded as cash but **not** as revenue, and appears at `GET /api/v1/admin/bank-events/attention` for a human.
 
+To see whether the rail is really connected, call `GET /api/v1/admin/bank-rail/status`. It reports `not_configured`, `configured_awaiting_first_credit`, or `proven`. It says `proven` only after a real, signed credit from the bank has been received and applied. Settings alone never count as proof.
+
 **Important:** the signature scheme and JSON field names for the bank notification are sensible defaults, not the bank's confirmed specification. Before real money flows, get First Hawaiian Bank's actual incoming-credit notification specification and adjust `verify_signature` and `InboundCreditEvent` in `app/services/payments.py` to match.
 
 Changing the settlement destination: `PUT /api/v1/admin/settlement-destination`. Admin only; requires the admin's password again and the exact phrase `CHANGE SETTLEMENT DESTINATION`. Every change is written to the audit log.
 
-## 4. Deploy
+## 4. Run the tests
+
+```bash
+pip install pytest
+python -m pytest -q tests
+```
+
+These cover the retry logic, the circuit breaker, and the Follow the Sun time zone math.
+
+## 5. Deploy
 
 The Dockerfile runs on Render, Google Cloud Run, Fly.io or Railway. Pick one you already have access to. Use a managed Postgres for `DATABASE_URL` in production (SQLite is for local testing only). Set secrets in the host's environment settings.
 
 Render example: create a Web Service from this repo, use the Docker runtime, and add the environment variables above.
 
-## 5. Prove it is live
+## 6. Prove it is live
 
 1. Open `https://YOUR-URL/healthz`. It should return `{"status":"ok"}`.
 2. Open `https://YOUR-URL/docs`.
@@ -98,8 +111,10 @@ pacific-rim-auctions/
 │   ├── api/               HTTP endpoints by area
 │   ├── core/              config, database, auth
 │   ├── services/          compliance gate, fees, bank payments, outreach,
-│   │                      SI briefing, audit logging, precedent matching
+│   │                      SI briefing, follow the sun, self-healing, audit logging,
+│   │                      precedent matching
 │   └── scripts/           jurisdiction seed
+├── tests/                 resilience and Follow the Sun tests
 ├── requirements.txt
 ├── Dockerfile
 ├── .env.example

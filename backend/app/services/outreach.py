@@ -28,6 +28,7 @@ from typing import Optional
 import requests
 
 from app.core.config import get_settings
+from app.services import resilience
 
 settings = get_settings()
 
@@ -50,12 +51,34 @@ def _headers() -> dict:
     }
 
 
+class _TransientHTTPError(Exception):
+    """Reply.io answered with a temporary error (429 or 5xx) worth retrying."""
+
+
+_breaker = resilience.get_breaker("reply_io", failure_threshold=5, recovery_seconds=60)
+_TRANSIENT = (requests.ConnectionError, requests.Timeout, _TransientHTTPError)
+
+
+@resilience.retry_with_backoff(attempts=3, retry_on=_TRANSIENT)
+def _send(method: str, url: str, **kwargs) -> dict:
+    response = requests.request(method, url, headers=_headers(), timeout=15, **kwargs)
+    if response.status_code == 429 or response.status_code >= 500:
+        raise _TransientHTTPError(f"Reply.io returned HTTP {response.status_code}")
+    response.raise_for_status()  # 4xx (bad key, bad request) is real: raised, never retried
+    return response.json()
+
+
+def _request(method: str, url: str, **kwargs) -> dict:
+    """All Reply.io calls go through retry-with-backoff and a circuit
+    breaker, so a temporary outage heals itself and a long one stops
+    hammering the service. Failures are still raised, never faked."""
+    return _breaker.call(_send, method, url, trip_on=_TRANSIENT, **kwargs)
+
+
 def verify_credentials() -> dict:
     """Calls Reply.io's /whoami endpoint to confirm the API key actually
     works. Use this before relying on any other call in this file."""
-    response = requests.get(f"{settings.reply_io_base_url}/whoami", headers=_headers())
-    response.raise_for_status()
-    return response.json()
+    return _request("GET", f"{settings.reply_io_base_url}/whoami")
 
 
 def add_contact(
@@ -77,11 +100,7 @@ def add_contact(
         "country": country,
         "customFields": custom_fields or {},
     }
-    response = requests.post(
-        f"{settings.reply_io_base_url}/contacts", headers=_headers(), json=payload
-    )
-    response.raise_for_status()
-    return response.json()
+    return _request("POST", f"{settings.reply_io_base_url}/contacts", json=payload)
 
 
 def add_contact_to_campaign(contact_id: str, campaign_id: str) -> dict:
@@ -89,21 +108,14 @@ def add_contact_to_campaign(contact_id: str, campaign_id: str) -> dict:
     (sequence). campaign_id must correspond to a real campaign already
     created in the Reply.io dashboard - this does not create campaigns,
     only enrolls contacts into ones you've already built there."""
-    response = requests.post(
+    return _request(
+        "POST",
         f"{settings.reply_io_base_url}/campaigns/{campaign_id}/contacts",
-        headers=_headers(),
         json={"contactId": contact_id},
     )
-    response.raise_for_status()
-    return response.json()
 
 
 def get_campaign_stats(campaign_id: str) -> dict:
     """Pull real performance stats (sent, opened, replied) for a campaign -
     the only numbers that should ever be reported as outreach results."""
-    response = requests.get(
-        f"{settings.reply_io_base_url}/campaigns/{campaign_id}/stats",
-        headers=_headers(),
-    )
-    response.raise_for_status()
-    return response.json()
+    return _request("GET", f"{settings.reply_io_base_url}/campaigns/{campaign_id}/stats")

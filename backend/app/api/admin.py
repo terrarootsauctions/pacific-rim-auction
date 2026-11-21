@@ -8,6 +8,7 @@ from app.core.database import get_db
 from app.core.deps import get_current_user
 from app.core.security import verify_password
 from app.models.enums import BankEventStatus, TransactionStatus, UserRole
+from app.core.config import get_settings
 from app.models.ledger import BankEvent
 from app.models.transaction import Transaction
 from app.models.user import User
@@ -138,3 +139,51 @@ def update_settlement_destination(
         notes="Settlement destination changed by admin with password re-entry and typed confirmation.",
     )
     return dest
+
+
+@router.get("/bank-rail/status")
+def bank_rail_status(
+    db: Session = Depends(get_db),
+    admin: User = Depends(require_admin),
+):
+    """Is the First Hawaiian Bank rail actually connected? 'Connected' is
+    proven only one way: a real, signature-verified credit from the bank has
+    been matched and applied. Settings alone never count as proof."""
+    settings = get_settings()
+    dest = payments.get_destination(db)
+
+    checks = {
+        "webhook_secret_set": bool(settings.fhb_webhook_secret),
+        "account_number_set": bool(dest.account_number),
+        "routing_number_valid": bool(dest.routing_number)
+        and len(dest.routing_number) == 9
+        and dest.routing_number.isdigit(),
+    }
+    applied_count = (
+        db.query(func.count(BankEvent.event_id))
+        .filter(BankEvent.status == BankEventStatus.APPLIED)
+        .scalar()
+    )
+    last_event_at = db.query(func.max(BankEvent.received_at)).scalar()
+
+    if not all(checks.values()):
+        state = "not_configured"
+        next_step = "Set the missing items shown as false in 'checks' (on the host, not in GitHub)."
+    elif applied_count == 0:
+        state = "configured_awaiting_first_credit"
+        next_step = (
+            "Settings are in place. Run one small real test: issue a payment "
+            "instruction, send that exact amount with the reference, and wait "
+            "for First Hawaiian Bank's signed notification."
+        )
+    else:
+        state = "proven"
+        next_step = "A real bank credit has been received and applied. The rail is working."
+
+    return {
+        "state": state,
+        "checks": checks,
+        "applied_bank_credits": applied_count,
+        "last_bank_event_at": last_event_at.isoformat() if last_event_at else None,
+        "next_step": next_step,
+    }
