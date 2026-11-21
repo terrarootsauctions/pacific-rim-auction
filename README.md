@@ -1,2 +1,5 @@
 # pacific-rim-auction
-Pacific Rim Auction — Global Unclaimed Asset Marketplace
+Pacific Rim Auctions: Global Unclaimed Asset Marketplace
+
+- Static site: repository root
+- Platform backend (FastAPI): [`backend/`](backend/README.md)
