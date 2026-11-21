@@ -32,7 +32,7 @@ from app.models.enums import AssetStatus, InspectionStatus, TransactionStatus
 from app.models.jurisdiction_node import JurisdictionNode, NodeStatus
 from app.models.listing import Inspection, Listing
 from app.models.transaction import Transaction
-from app.services import follow_the_sun, outreach, payments, resilience
+from app.services import money, follow_the_sun, outreach, payments, resilience
 
 
 def system_health_report(db: Session) -> dict:
@@ -136,7 +136,7 @@ def real_revenue_summary(db: Session) -> dict:
     endpoint, surfaced here as part of SI's report so the architect sees
     it alongside everything else in one place."""
     confirmed_fee_total = (
-        db.query(func.coalesce(func.sum(Transaction.platform_fee_usd), 0.0))
+        db.query(func.coalesce(func.sum(Transaction.platform_fee_minor), 0))
         .filter(Transaction.status == TransactionStatus.FEE_COLLECTED)
         .scalar()
     )
@@ -146,7 +146,9 @@ def real_revenue_summary(db: Session) -> dict:
         .scalar()
     )
     return {
-        "confirmed_platform_fee_revenue_usd": confirmed_fee_total,
+        "currency": "USD",
+        "confirmed_platform_fee_revenue_minor": int(confirmed_fee_total),
+        "confirmed_platform_fee_revenue": money.format_minor(int(confirmed_fee_total)),
         "confirmed_transaction_count": confirmed_count,
         "source_of_truth": "First Hawaiian Bank-confirmed credits only",
     }
@@ -225,3 +227,107 @@ def full_architect_briefing(db: Session) -> dict:
         "revenue": real_revenue_summary(db),
         "reminder": "SI does not act on any of this. The architect decides.",
     }
+
+
+# ---------------------------------------------------------------------------
+# Capability registry, briefings, metrics, reconciliation (read-only)
+# ---------------------------------------------------------------------------
+import hashlib
+from pathlib import Path
+
+from app.models.enums import BankEventStatus
+from app.models.ledger import BankEvent, LedgerEntry
+from app.models.memory import MemoryArchive, MemoryRecord, MemoryVerification
+
+
+def capabilities(db: Session) -> list:
+    """Honest status of every capability. A capability is only 'active' when the
+    code is present AND the thing it depends on is actually in place."""
+    from app.core.config import get_settings
+    from app.services import onetrust
+
+    s = get_settings()
+    last_ver = db.query(MemoryVerification).order_by(MemoryVerification.id.desc()).first() \
+        if hasattr(MemoryVerification, "id") else None
+    archived = db.query(func.count(MemoryArchive.id)).scalar() if hasattr(MemoryArchive, "id") else 0
+    bank = _check_bank()
+    return [
+        {"name": "Live bid engine (atomic, idempotent, anti-sniping)", "status": "built",
+         "detail": "Runs in this service; proven by unit tests of the rules, not yet by a live auction."},
+        {"name": "Crystal Quartz Memory Lock (hash chain, Ed25519 + ML-DSA-65)", "status": "built",
+         "detail": "Last verification: " + (last_ver.status if last_ver else "none yet")},
+        {"name": "Physical quartz archive (5D glass/crystal)", "status": "requires_provider",
+         "detail": f"No physical archiving is done here. Archive confirmations recorded: {archived}. "
+                   "A record is only 'archived' after a provider confirms the matching package hash."},
+        {"name": "First Hawaiian Bank receive rail", "status": bank["status"], "detail": bank["detail"]},
+        {"name": "OneTrust compliance checkpoint", **onetrust.status()},
+        {"name": "Follow the Sun scheduling", "status": "built",
+         "detail": "Counts only legally reviewed (ACTIVE) jurisdictions."},
+        {"name": "Autonomous algorithm evolution", "status": "built_bounded",
+         "detail": "Applies only approved, bounded parameter changes with evidence and auto-revert. "
+                   "It does not generate its own proposals; that needs real telemetry."},
+        {"name": "Quantum computing", "status": "not_applicable",
+         "detail": "No role in an auction platform. The quantum-era protection is the post-quantum signature."},
+        {"name": "Hardware-hardened devices (seL4/Knox)", "status": "not_buildable_in_software",
+         "detail": "Hardware/OS matter, outside this codebase."},
+        {"name": "Background loop (auction close, hourly verification)", "status":
+         "enabled" if s.background_enabled else "disabled", "detail": "Runs inside the web service."},
+    ]
+
+
+def tomorrow_prep(db: Session, hours: int = 24) -> dict:
+    now = datetime.utcnow()
+    closing = (
+        db.query(Listing).filter(Listing.closed_at.is_(None), Listing.ends_at.isnot(None),
+                                 Listing.ends_at <= now + timedelta(hours=hours)).all()
+    )
+    attention = db.query(BankEvent).filter(
+        BankEvent.status.in_([BankEventStatus.NEEDS_REVIEW, BankEventStatus.UNMATCHED])).count()
+    return {
+        "generated_at": now.isoformat(),
+        "auctions_closing_within_hours": hours,
+        "closing_auctions": [{"listing_id": l.id, "closes_at": l.ends_at.isoformat(),
+                              "current_bid_minor": l.current_bid_minor} for l in closing],
+        "pending_inspections": pending_inspection_report(db),
+        "jurisdictions_pending_review": jurisdiction_node_coverage(db)["pending_review"],
+        "bank_events_needing_attention": attention,
+    }
+
+
+def reconciliation(db: Session) -> dict:
+    """Ledger must balance (debits == credits) and every bank-confirmed fee must
+    equal recorded revenue. Anything else is reported, never auto-corrected."""
+    debit = db.query(func.coalesce(func.sum(LedgerEntry.debit_minor), 0)).scalar()
+    credit = db.query(func.coalesce(func.sum(LedgerEntry.credit_minor), 0)).scalar()
+    revenue = db.query(func.coalesce(func.sum(LedgerEntry.credit_minor), 0)).filter(
+        LedgerEntry.account_code == "REVENUE").scalar()
+    confirmed = real_revenue_summary(db)["confirmed_platform_fee_revenue_minor"]
+    problems = []
+    if int(debit) != int(credit):
+        problems.append("LEDGER_UNBALANCED")
+    if int(revenue) != int(confirmed):
+        problems.append("REVENUE_MISMATCH")
+    return {"status": "RECONCILED" if not problems else "DISCREPANCY", "problems": problems,
+            "debits_minor": int(debit), "credits_minor": int(credit),
+            "ledger_revenue_minor": int(revenue), "confirmed_fee_minor": int(confirmed)}
+
+
+def build_manifest() -> dict:
+    root = Path(__file__).resolve().parents[1]
+    files = {}
+    for p in sorted(root.rglob("*.py")):
+        files[str(p.relative_to(root.parent))] = hashlib.sha256(p.read_bytes()).hexdigest()
+    digest = hashlib.sha256("".join(f"{k}:{v}\n" for k, v in files.items()).encode()).hexdigest()
+    return {"files": len(files), "manifest_sha256": digest, "hashes": files}
+
+
+def metrics_text(db: Session) -> str:
+    rec = reconciliation(db)
+    lines = [
+        f"pacific_rim_memory_records {db.query(func.count(MemoryRecord.sequence)).scalar()}",
+        f"pacific_rim_assets {db.query(func.count(Asset.id)).scalar()}",
+        f"pacific_rim_listings {db.query(func.count(Listing.id)).scalar()}",
+        f"pacific_rim_confirmed_revenue_minor {rec['confirmed_fee_minor']}",
+        f"pacific_rim_reconciled {1 if rec['status'] == 'RECONCILED' else 0}",
+    ]
+    return "\n".join(lines) + "\n"

@@ -23,6 +23,33 @@ class Settings(BaseSettings):
     secret_key: str = "CHANGE_ME_IN_ENV"
     access_token_expire_minutes: int = 60 * 24  # 24 hours
 
+    # --- Memory Lock signing (Ed25519 key is derived from this secret) ---
+    # REQUIRED in production. Back it up: losing or changing it means older
+    # signatures can no longer be verified with the new key.
+    memory_signing_secret: str = ""
+    memory_key_version: str = "1"
+    system_identity: str = "Pacific Rim Auctions"
+    app_version: str = "1.0.0"
+
+    # --- Auction engine defaults (the evolution engine may tune these within bounds) ---
+    min_bid_increment_minor: int = 100          # $1.00
+    anti_snipe_window_seconds: int = 30
+    anti_snipe_extension_seconds: int = 30
+    bid_rate_limit_count: int = 20              # bids allowed per window, per user
+    bid_rate_limit_window_seconds: int = 10
+
+    # --- Background operations (24/7 loop) ---
+    background_enabled: bool = True
+    auction_close_interval_seconds: int = 15
+    memory_verify_interval_seconds: int = 3600
+
+    # --- OneTrust compliance checkpoint ---
+    # The platform has a hard-coded compliance checkpoint. When ONETRUST_ENFORCE
+    # is true, going live is refused unless OneTrust is connected AND cleared.
+    onetrust_enforce: bool = False
+    onetrust_api_base_url: str = ""
+    onetrust_api_token: str = ""
+
     # --- First admin account (created once, only if no admin exists yet) ---
     # Set both on the host, start the service once, then DELETE the password
     # variable. Public signup can never create an admin.
@@ -57,10 +84,16 @@ class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8")
 
     @model_validator(mode="after")
-    def _refuse_placeholder_secret_in_production(self):
-        # A live platform must never run with the placeholder signing secret.
-        if self.environment == "production" and self.secret_key == "CHANGE_ME_IN_ENV":
-            raise ValueError("SECRET_KEY must be set to a real random value when ENVIRONMENT=production.")
+    def _production_safety(self):
+        # A live platform must never run with placeholder secrets.
+        if self.environment == "production":
+            if self.secret_key == "CHANGE_ME_IN_ENV":
+                raise ValueError("SECRET_KEY must be set to a real random value when ENVIRONMENT=production.")
+            if len(self.memory_signing_secret) < 32:
+                raise ValueError("MEMORY_SIGNING_SECRET (32+ characters) is required when ENVIRONMENT=production.")
+        elif not self.memory_signing_secret:
+            # Development and tests only. Never reachable in production (checked above).
+            self.memory_signing_secret = "development-only-memory-secret-not-for-production"
         return self
 
 

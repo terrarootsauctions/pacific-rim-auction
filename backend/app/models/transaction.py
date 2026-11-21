@@ -14,7 +14,7 @@ field because this platform never pays anyone.
 import uuid
 from datetime import datetime
 
-from sqlalchemy import Column, DateTime, Enum, Float, ForeignKey, String
+from sqlalchemy import BigInteger, Column, DateTime, Enum, ForeignKey, Integer, String
 from sqlalchemy.orm import relationship
 
 from app.core.database import Base
@@ -37,9 +37,12 @@ class Transaction(Base):
     # Auctions LLC. Valid codes: PRA, PRA_LLC, TERRAROOTS_REALTY.
     entity_code = Column(String, nullable=False, default="PRA_LLC", index=True)
 
-    sale_amount_usd = Column(Float, nullable=False)
-    platform_fee_rate = Column(Float, nullable=False)  # the actual 0.03-0.05 applied
-    platform_fee_usd = Column(Float, nullable=False)
+    # Money is whole cents (integers), never floats. The rate is whole basis
+    # points (300 = 3.00%), clamped to the mandated 3-5% band.
+    currency = Column(String(3), nullable=False, default="USD")
+    sale_amount_minor = Column(BigInteger, nullable=False)
+    platform_fee_rate_bps = Column(Integer, nullable=False)
+    platform_fee_minor = Column(BigInteger, nullable=False)
 
     status = Column(Enum(TransactionStatus), default=TransactionStatus.PENDING, nullable=False)
 

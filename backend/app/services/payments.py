@@ -33,6 +33,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.core.config import get_settings
+from app.services import memory_lock, money
 from app.models.enums import BankEventStatus, TransactionStatus
 from app.models.ledger import BankEvent, LedgerEntry, SettlementDestination
 from app.models.transaction import Transaction
@@ -117,8 +118,9 @@ def create_payment_instruction(db: Session, transaction: Transaction) -> dict:
 
     return {
         "transaction_id": transaction.id,
-        "amount_due_usd": transaction.platform_fee_usd,
-        "currency": "USD",
+        "amount_due_minor": transaction.platform_fee_minor,
+        "amount_due": money.format_minor(transaction.platform_fee_minor),
+        "currency": transaction.currency,
         "pay_to": {
             "bank_name": dest.bank_name,
             "branch": dest.branch,
@@ -195,9 +197,9 @@ def handle_bank_credit(db: Session, raw_body: bytes, signature: Optional[str]) -
         credit_account = "UNAPPLIED_RECEIPTS"
     else:
         entity = txn.entity_code
-        fee_minor = int(round(txn.platform_fee_usd * 100))
+        fee_minor = txn.platform_fee_minor
         exact = (
-            event.currency == "USD"
+            event.currency == txn.currency
             and event.amount_minor == fee_minor
             and txn.status == TransactionStatus.PENDING
         )
@@ -224,13 +226,41 @@ def handle_bank_credit(db: Session, raw_body: bytes, signature: Optional[str]) -
         event.currency, event.amount_minor, credit_account,
     )
 
+    memory_lock.capture(
+        db,
+        memory_lock.EventType.SETTLEMENT_STATUS_CHANGED,
+        {
+            "bank_event_id": event.event_id,
+            "result": status.value,
+            "currency": event.currency,
+            "amount_minor": event.amount_minor,
+            "payment_reference": event.payment_reference,
+            "transaction_id": txn.id if txn else None,
+        },
+        metadata={"bank_reference": event.bank_reference},
+    )
+
     if txn is not None:
+        previous_status = txn.status.value
         txn.bank_reference = event.bank_reference
         txn.received_at = datetime.utcnow()
         txn.status = (
             TransactionStatus.FEE_COLLECTED
             if status == BankEventStatus.APPLIED
             else TransactionStatus.NEEDS_REVIEW
+        )
+        memory_lock.capture(
+            db,
+            memory_lock.EventType.PAYMENT_STATUS_CHANGED,
+            {
+                "transaction_id": txn.id,
+                "from_status": previous_status,
+                "to_status": txn.status.value,
+                "currency": txn.currency,
+                "fee_minor": txn.platform_fee_minor,
+                "credited_minor": event.amount_minor,
+            },
+            auction_id=txn.listing_id,
         )
 
     db.commit()

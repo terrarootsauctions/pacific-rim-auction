@@ -16,9 +16,10 @@ from app.schemas.listing import (
     ListingCreate,
     ListingOut,
 )
-from app.services import compliance
+from app.services import compliance, money
+from app.services import auction_engine, memory_lock, onetrust
 from app.services.audit import record_audit_event
-from app.services.fees import clamp_fee_rate
+from app.services.fees import rate_bps
 
 router = APIRouter(prefix="/listings", tags=["listings"])
 
@@ -51,14 +52,31 @@ def create_listing(
         listing_type=listing_in.listing_type,
         title=listing_in.title,
         description=listing_in.description,
-        asking_price_usd=listing_in.asking_price_usd,
-        platform_fee_rate=clamp_fee_rate(listing_in.platform_fee_rate),
+        currency="USD",
+        asking_price_minor=(
+            money.usd_to_minor(listing_in.asking_price_usd)
+            if listing_in.asking_price_usd is not None else None
+        ),
+        platform_fee_rate_bps=rate_bps(listing_in.platform_fee_rate),
         requires_inspection=requires_inspection,
         starts_at=listing_in.starts_at,
         ends_at=listing_in.ends_at,
         is_live=False,
     )
     db.add(listing)
+    db.flush()  # assigns listing.id
+
+    # Locked into the Memory Lock in the SAME transaction as the listing itself.
+    created_payload = {
+        "listing_id": listing.id, "asset_id": asset.id, "listing_type": listing.listing_type.value,
+        "currency": listing.currency, "asking_price_minor": listing.asking_price_minor,
+        "platform_fee_rate_bps": listing.platform_fee_rate_bps,
+    }
+    memory_lock.capture(db, memory_lock.EventType.LOT_CREATED, created_payload,
+                        auction_id=listing.id, lot_id=asset.id, actor_id=current_user.id)
+    if listing.listing_type.value == "auction":
+        memory_lock.capture(db, memory_lock.EventType.AUCTION_CREATED, created_payload,
+                            auction_id=listing.id, lot_id=asset.id, actor_id=current_user.id)
     db.commit()
     db.refresh(listing)
 
@@ -77,6 +95,16 @@ def list_listings(
     if is_live is not None:
         query = query.filter(Listing.is_live == is_live)
     return query.all()
+
+
+@router.get("/{listing_id}/auction-state")
+def get_auction_state(listing_id: str, db: Session = Depends(get_db)):
+    """Authoritative server-side state of the auction (sequence, current bid,
+    minimum valid bid, closing time). Clients should treat this as the truth."""
+    listing = db.query(Listing).filter(Listing.id == listing_id).first()
+    if not listing:
+        raise HTTPException(status_code=404, detail="Listing not found")
+    return auction_engine.snapshot(db, listing)
 
 
 @router.get("/{listing_id}", response_model=ListingOut)
@@ -103,7 +131,20 @@ def publish_listing(
     if not cleared:
         raise HTTPException(status_code=400, detail=reason)
 
+    # Hard-coded OneTrust compliance checkpoint (enforced when configured to be).
+    ot_cleared, ot_reason = onetrust.check_listing(listing)
+    if not ot_cleared:
+        raise HTTPException(status_code=400, detail=ot_reason)
+
     listing.is_live = True
+    memory_lock.capture(
+        db, memory_lock.EventType.AUCTION_OPENED,
+        {"listing_id": listing.id, "listing_type": listing.listing_type.value,
+         "starts_at": listing.starts_at.isoformat() + "Z" if listing.starts_at else None,
+         "closes_at": listing.ends_at.isoformat() + "Z" if listing.ends_at else None,
+         "onetrust": ot_reason},
+        auction_id=listing.id, actor_id=current_user.id,
+    )
     db.commit()
     db.refresh(listing)
 
