@@ -28,13 +28,19 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.api import admin, assets, audit_log, auth, bids, jurisdiction_nodes, listings, outreach, payments, si, users
 from app.core.config import get_settings
-from app.core.database import Base, engine
+from app.core.database import Base, SessionLocal, engine
+from app.services import bootstrap
 
 settings = get_settings()
 
 # Creates tables if they don't exist yet. For production, prefer Alembic
 # migrations - this is fine for getting the skeleton running immediately.
 Base.metadata.create_all(bind=engine)
+
+with SessionLocal() as _db:
+    _bootstrap_status = bootstrap.ensure_admin(_db)
+    if _bootstrap_status:
+        print(f"[bootstrap] {_bootstrap_status}")
 
 app = FastAPI(
     title=settings.app_name,
@@ -45,7 +51,7 @@ app = FastAPI(
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # tighten this to known frontend origins before production
+    allow_origins=[o.strip() for o in settings.cors_origins.split(",") if o.strip()],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

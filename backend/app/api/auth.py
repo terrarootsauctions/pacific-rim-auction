@@ -4,6 +4,7 @@ from sqlalchemy.orm import Session
 
 from app.core.database import get_db
 from app.core.security import create_access_token, hash_password, verify_password
+from app.models.enums import UserRole
 from app.models.user import User
 from app.schemas.user import UserCreate, UserOut
 
@@ -12,6 +13,12 @@ router = APIRouter(prefix="/auth", tags=["auth"])
 
 @router.post("/signup", response_model=UserOut, status_code=status.HTTP_201_CREATED)
 def signup(user_in: UserCreate, db: Session = Depends(get_db)):
+    # Public signup may only create buyers and sellers. Admin, compliance and
+    # inspector accounts are never self-assigned: anyone could otherwise make
+    # themselves an admin and redirect where revenue is sent.
+    if user_in.role not in (UserRole.BUYER, UserRole.SELLER):
+        raise HTTPException(status_code=403, detail="That role cannot be self-assigned at signup.")
+
     existing = db.query(User).filter(User.email == user_in.email).first()
     if existing:
         raise HTTPException(status_code=400, detail="Email already registered")

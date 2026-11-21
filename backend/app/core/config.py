@@ -5,6 +5,7 @@ All secrets (bank webhook secret, DB credentials, etc.) are loaded from
 environment variables / a .env file. Nothing sensitive is hardcoded here.
 """
 from functools import lru_cache
+from pydantic import model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -21,6 +22,15 @@ class Settings(BaseSettings):
     # --- Security ---
     secret_key: str = "CHANGE_ME_IN_ENV"
     access_token_expire_minutes: int = 60 * 24  # 24 hours
+
+    # --- First admin account (created once, only if no admin exists yet) ---
+    # Set both on the host, start the service once, then DELETE the password
+    # variable. Public signup can never create an admin.
+    admin_bootstrap_email: str = ""
+    admin_bootstrap_password: str = ""
+
+    # --- Browser access (comma-separated list of allowed website origins) ---
+    cors_origins: str = "https://pacificrimauctions.com,https://www.pacificrimauctions.com"
 
     # --- Database ---
     database_url: str = "sqlite:///./pacific_rim.db"
@@ -45,6 +55,13 @@ class Settings(BaseSettings):
     reply_io_base_url: str = "https://api.reply.io/v3"
 
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8")
+
+    @model_validator(mode="after")
+    def _refuse_placeholder_secret_in_production(self):
+        # A live platform must never run with the placeholder signing secret.
+        if self.environment == "production" and self.secret_key == "CHANGE_ME_IN_ENV":
+            raise ValueError("SECRET_KEY must be set to a real random value when ENVIRONMENT=production.")
+        return self
 
 
 @lru_cache

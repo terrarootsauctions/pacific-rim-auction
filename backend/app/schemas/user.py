@@ -1,14 +1,14 @@
 from datetime import datetime
 from typing import Optional
 
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, EmailStr, Field
 
 from app.models.enums import UserRole
 
 
 class UserCreate(BaseModel):
     email: EmailStr
-    password: str
+    password: str = Field(min_length=12, max_length=128)
     full_name: Optional[str] = None
     country: Optional[str] = None
     role: UserRole = UserRole.BUYER

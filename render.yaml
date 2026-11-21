@@ -1,0 +1,41 @@
+# Render Blueprint: deploys the Pacific Rim Auctions backend (backend/) with
+# its own Postgres database. Production only: no sandbox or demo mode.
+#
+# Secrets are NOT stored here. Render asks for FHB_ACCOUNT_NUMBER once when
+# the Blueprint is first created. FHB_WEBHOOK_SECRET is added later in the
+# Render dashboard (Environment tab) when First Hawaiian Bank issues it.
+#
+# These are paid plans on purpose: a free web service goes to sleep (it could
+# miss a bank notification) and a free database expires.
+
+services:
+  - type: web
+    name: pacific-rim-auctions
+    runtime: docker
+    plan: 0.5c-512mb
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: ./backend
+    healthCheckPath: /healthz
+    autoDeploy: true
+    envVars:
+      - key: ENVIRONMENT
+        value: production
+      - key: SECRET_KEY
+        generateValue: true
+      - key: DATABASE_URL
+        fromDatabase:
+          name: pacific-rim-db
+          property: connectionString
+      - key: FHB_ROUTING_NUMBER
+        value: "121301015"
+      - key: FHB_ACCOUNT_NUMBER
+        sync: false
+      - key: COUNTRY_TARGET
+        value: "190"
+
+databases:
+  - name: pacific-rim-db
+    plan: 0.1c-256mb
+    databaseName: pacific_rim
+    user: pacific_rim_app
+    postgresMajorVersion: "18"

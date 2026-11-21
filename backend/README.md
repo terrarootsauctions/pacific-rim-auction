@@ -44,6 +44,17 @@ uvicorn app.main:app --reload
 
 Open **http://localhost:8000/docs**. If you see the Swagger page listing auth, users, assets, listings, bids, payments, admin, outreach, si, jurisdiction-nodes and audit-log, the platform is running.
 
+## 1b. Create your admin account (one time)
+
+Public signup can only create buyers and sellers, never an admin. To get your admin account, set these two variables on the host, start the service once, then **delete the password variable**:
+
+```
+ADMIN_BOOTSTRAP_EMAIL=you@yourdomain.com
+ADMIN_BOOTSTRAP_PASSWORD=a-long-password-12-characters-or-more
+```
+
+Log in at `/docs` (Authorize button) with that email and password. The admin account can view revenue, review jurisdiction nodes and change the bank destination.
+
 ## 2. Seed the jurisdiction nodes (one time)
 
 ```bash
@@ -87,7 +98,9 @@ These cover the retry logic, the circuit breaker, and the Follow the Sun time zo
 
 ## 5. Deploy
 
-The Dockerfile runs on Render, Google Cloud Run, Fly.io or Railway. Pick one you already have access to. Use a managed Postgres for `DATABASE_URL` in production (SQLite is for local testing only). Set secrets in the host's environment settings.
+**Render, one click:** the repo root contains `render.yaml`. In Render choose New, then Blueprint, pick this repository, and apply. It creates the web service and its Postgres database, generates the signing secret, and sets production mode. Render asks for your account number once. Add `FHB_WEBHOOK_SECRET` later in the service's Environment tab when the bank issues it. These are paid plans on purpose: a free service sleeps and could miss a bank notification.
+
+Other hosts: the Dockerfile runs on Render, Google Cloud Run, Fly.io or Railway. Pick one you already have access to. Use a managed Postgres for `DATABASE_URL` in production (SQLite is for local testing only). Set secrets in the host's environment settings.
 
 Render example: create a Web Service from this repo, use the Docker runtime, and add the environment variables above.
 
