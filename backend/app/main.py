@@ -23,30 +23,58 @@ Run locally:
 
 Interactive API docs (Swagger UI): http://localhost:8000/docs
 """
+import asyncio
+import logging
+from contextlib import asynccontextmanager
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.api import admin, assets, audit_log, auth, bids, jurisdiction_nodes, listings, outreach, payments, si, users
+from app.api import (
+    admin, assets, audit_log, auth, bids, crystal, jurisdiction_nodes, listings, memory,
+    outreach, payments, si, users, ws,
+)
 from app.core.config import get_settings
 from app.core.database import Base, SessionLocal, engine
-from app.services import bootstrap
+from app.services import background, bootstrap, evolution, memory_lock
 
 settings = get_settings()
+log = logging.getLogger("pacific_rim")
 
-# Creates tables if they don't exist yet. For production, prefer Alembic
-# migrations - this is fine for getting the skeleton running immediately.
-Base.metadata.create_all(bind=engine)
 
-with SessionLocal() as _db:
-    _bootstrap_status = bootstrap.ensure_admin(_db)
-    if _bootstrap_status:
-        print(f"[bootstrap] {_bootstrap_status}")
+@asynccontextmanager
+async def lifespan(_app: FastAPI):
+    # Creates tables if they don't exist yet (Alembic migrations are a later step).
+    Base.metadata.create_all(bind=engine)
+    with SessionLocal() as db:
+        memory_lock.ensure_chain_head(db)
+        db.commit()
+        status = bootstrap.ensure_admin(db)
+        if status:
+            log.warning("[bootstrap] %s", status)
+        evolution.get_params(db)
+    stop = asyncio.Event()
+    tasks = []
+    if settings.background_enabled:
+        tasks = [
+            asyncio.create_task(background.close_loop(stop)),
+            asyncio.create_task(background.verify_loop(stop)),
+        ]
+    try:
+        yield
+    finally:
+        stop.set()
+        for t in tasks:
+            t.cancel()
+        await asyncio.gather(*tasks, return_exceptions=True)
+
 
 app = FastAPI(
     title=settings.app_name,
     description="Headless API for global unclaimed asset sourcing and the Pacific Rim "
     "Auctions LLC real estate marketplace, operating across 190 countries and six continents.",
-    version="0.1.0",
+    version=settings.app_version,
+    lifespan=lifespan,
 )
 
 app.add_middleware(
@@ -68,6 +96,9 @@ app.include_router(outreach.router, prefix=settings.api_v1_prefix)
 app.include_router(si.router, prefix=settings.api_v1_prefix)
 app.include_router(jurisdiction_nodes.router, prefix=settings.api_v1_prefix)
 app.include_router(audit_log.router, prefix=settings.api_v1_prefix)
+app.include_router(memory.router, prefix=settings.api_v1_prefix)
+app.include_router(ws.router)
+app.include_router(crystal.router)
 
 
 @app.get("/")

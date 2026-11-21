@@ -23,12 +23,13 @@ import uuid
 from datetime import datetime
 
 from sqlalchemy import (
+    BigInteger,
     Boolean,
     Column,
     DateTime,
     Enum,
-    Float,
     ForeignKey,
+    Integer,
     String,
     Text,
 )
@@ -54,11 +55,25 @@ class Listing(Base):
 
     title = Column(String, nullable=False)
     description = Column(Text, nullable=True)
-    asking_price_usd = Column(Float, nullable=True)
-    current_bid_usd = Column(Float, nullable=True)
+    # Money is whole minor units (cents), never floats.
+    currency = Column(String(3), nullable=False, default="USD")
+    asking_price_minor = Column(BigInteger, nullable=True)   # starting price for auctions
+    current_bid_minor = Column(BigInteger, nullable=True)
 
-    # Platform fee actually applied to this listing, set within the 3-5% rolling range.
-    platform_fee_rate = Column(Float, default=0.03)
+    # Platform fee actually applied to this listing, in whole basis points
+    # (300 = 3.00%), kept inside the mandated 3-5% band.
+    platform_fee_rate_bps = Column(Integer, nullable=False, default=300)
+
+    # Authoritative, server-side auction state. The browser never decides these.
+    auction_sequence = Column(BigInteger, nullable=False, default=0)
+    leading_bidder_id = Column(String, nullable=True)
+    closed_at = Column(DateTime, nullable=True)
+    winner_id = Column(String, nullable=True)
+    winning_bid_minor = Column(BigInteger, nullable=True)
+
+    # Compliance hold: while set, bidding is paused (never guess legality).
+    compliance_hold = Column(Boolean, nullable=False, default=False)
+    compliance_hold_reason = Column(Text, nullable=True)
 
     # Gate: real-property listings cannot go live until all required
     # inspections are COMPLETED and DISCLOSED. Checked by a service function,

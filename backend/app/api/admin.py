@@ -13,7 +13,8 @@ from app.models.ledger import BankEvent
 from app.models.transaction import Transaction
 from app.models.user import User
 from app.schemas.transaction import SettlementDestinationOut, SettlementDestinationUpdate
-from app.services import money, payments
+from app.models.listing import Listing
+from app.services import evolution, memory_lock, money, onetrust, payments
 from app.services.audit import record_audit_event
 
 router = APIRouter(prefix="/admin", tags=["admin"])
@@ -126,6 +127,12 @@ def update_settlement_destination(
     dest.account_number = update.account_number
     dest.updated_by = admin.id
     dest.updated_at = datetime.utcnow()
+    memory_lock.capture(
+        db, memory_lock.EventType.ADMINISTRATIVE_ACTION,
+        {"action": "settlement_destination_changed", "entity": "settlement_destination",
+         "account_last4_after": (update.account_number or "")[-4:]},
+        actor_id=admin.id,
+    )
     db.commit()
     db.refresh(dest)
 
@@ -190,3 +197,100 @@ def bank_rail_status(
         "last_bank_event_at": last_event_at.isoformat() if last_event_at else None,
         "next_step": next_step,
     }
+
+
+# --------------------------------------------------------------------------
+# Compliance hold: never guess legality. A held auction stops accepting bids.
+# --------------------------------------------------------------------------
+from pydantic import BaseModel, Field  # noqa: E402
+
+
+class ComplianceHoldRequest(BaseModel):
+    hold: bool
+    reason: str = Field(min_length=3, max_length=1000)
+
+
+@router.post("/listings/{listing_id}/compliance-hold")
+def set_compliance_hold(
+    listing_id: str,
+    body: ComplianceHoldRequest,
+    db: Session = Depends(get_db),
+    admin: User = Depends(require_admin),
+):
+    listing = db.query(Listing).filter(Listing.id == listing_id).first()
+    if not listing:
+        raise HTTPException(status_code=404, detail="Listing not found")
+    before = f"compliance_hold={listing.compliance_hold}"
+    listing.compliance_hold = body.hold
+    listing.compliance_hold_reason = body.reason if body.hold else None
+    db.commit()
+    record_audit_event(
+        db,
+        actor_user_id=admin.id,
+        actor_role=admin.role.value,
+        entity_type="listing",
+        entity_id=listing.id,
+        action="compliance_hold_set" if body.hold else "compliance_hold_lifted",
+        before_state=before,
+        after_state=f"compliance_hold={listing.compliance_hold}",
+        notes=body.reason,
+    )
+    return {"listing_id": listing.id, "compliance_hold": listing.compliance_hold}
+
+
+# --------------------------------------------------------------------------
+# Autonomous Algorithm Evolution: bounded, evidence-gated, fully recorded.
+# --------------------------------------------------------------------------
+class ParameterChange(BaseModel):
+    parameter: str
+    new_value: int
+    reason: str = Field(min_length=3, max_length=2000)
+    evidence: dict
+
+
+class RollbackRequest(BaseModel):
+    parameter: str
+    reason: str = Field(min_length=3, max_length=2000)
+
+
+class MetricsReport(BaseModel):
+    parameter: str
+    metrics: dict
+    thresholds: dict
+
+
+@router.get("/evolution/parameters")
+def get_evolution_parameters(db: Session = Depends(get_db), admin: User = Depends(require_admin)):
+    from app.services import evolution_rules
+
+    return {
+        "current": evolution.get_params(db),
+        "bounds": {k: {"min": v[0], "max": v[1]} for k, v in evolution_rules.PARAMETERS.items()},
+        "protected_never_changeable": sorted(evolution_rules.PROTECTED),
+    }
+
+
+@router.post("/evolution/change")
+def propose_parameter_change(body: ParameterChange, db: Session = Depends(get_db),
+                             admin: User = Depends(require_admin)):
+    return evolution.propose_change(db, body.parameter, body.new_value, body.reason,
+                                    body.evidence, admin.id)
+
+
+@router.post("/evolution/rollback")
+def rollback_parameter(body: RollbackRequest, db: Session = Depends(get_db),
+                       admin: User = Depends(require_admin)):
+    return evolution.rollback(db, body.parameter, body.reason, admin.id)
+
+
+@router.post("/evolution/evaluate")
+def evaluate_parameter(body: MetricsReport, db: Session = Depends(get_db),
+                       admin: User = Depends(require_admin)):
+    """Report observed metrics after a change. If any predefined safety
+    threshold is violated (or a metric is missing), the change is reverted."""
+    return evolution.evaluate_and_revert(db, body.parameter, body.metrics, body.thresholds, admin.id)
+
+
+@router.get("/onetrust/status")
+def onetrust_status(admin: User = Depends(require_admin)):
+    return onetrust.status()

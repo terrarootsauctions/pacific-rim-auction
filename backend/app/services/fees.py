@@ -34,3 +34,11 @@ def calculate_platform_fee_minor(sale_minor: int, fee_rate) -> tuple:
     """Returns (fee_in_cents, rate_in_basis_points) for a sale in cents."""
     bps = rate_bps(fee_rate)
     return money.fee_minor(sale_minor, bps), bps
+
+
+def calculate_fee_minor_from_bps(sale_minor: int, stored_bps: int) -> tuple:
+    """Fee for a listing that already stores its rate in basis points. The
+    rate is re-clamped into the mandated band as a safety net."""
+    low, high = fee_band_bps()
+    bps = max(low, min(high, int(stored_bps)))
+    return money.fee_minor(sale_minor, bps), bps

@@ -1,7 +1,8 @@
 from datetime import datetime
+from decimal import Decimal
 from typing import Optional
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from app.models.enums import InspectionStatus, InspectionType, ListingType
 
@@ -11,8 +12,9 @@ class ListingCreate(BaseModel):
     listing_type: ListingType
     title: str
     description: Optional[str] = None
-    asking_price_usd: Optional[float] = None
-    platform_fee_rate: float = 0.03
+    # Exact decimal dollars, at most two places (e.g. "250000.00").
+    asking_price_usd: Optional[Decimal] = Field(default=None, gt=0, max_digits=15, decimal_places=2)
+    platform_fee_rate: Decimal = Field(default=Decimal("0.03"), ge=0, le=1)
     starts_at: Optional[datetime] = None
     ends_at: Optional[datetime] = None
 
@@ -24,9 +26,13 @@ class ListingOut(BaseModel):
     listing_type: ListingType
     title: str
     description: Optional[str]
-    asking_price_usd: Optional[float]
-    current_bid_usd: Optional[float]
-    platform_fee_rate: float
+    currency: str
+    asking_price_minor: Optional[int]
+    current_bid_minor: Optional[int]
+    platform_fee_rate_bps: int
+    auction_sequence: int
+    closed_at: Optional[datetime]
+    compliance_hold: bool
     is_live: bool
     requires_inspection: bool
     starts_at: Optional[datetime]

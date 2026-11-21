@@ -33,7 +33,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.core.config import get_settings
-from app.services import money
+from app.services import memory_lock, money
 from app.models.enums import BankEventStatus, TransactionStatus
 from app.models.ledger import BankEvent, LedgerEntry, SettlementDestination
 from app.models.transaction import Transaction
@@ -226,13 +226,41 @@ def handle_bank_credit(db: Session, raw_body: bytes, signature: Optional[str]) -
         event.currency, event.amount_minor, credit_account,
     )
 
+    memory_lock.capture(
+        db,
+        memory_lock.EventType.SETTLEMENT_STATUS_CHANGED,
+        {
+            "bank_event_id": event.event_id,
+            "result": status.value,
+            "currency": event.currency,
+            "amount_minor": event.amount_minor,
+            "payment_reference": event.payment_reference,
+            "transaction_id": txn.id if txn else None,
+        },
+        metadata={"bank_reference": event.bank_reference},
+    )
+
     if txn is not None:
+        previous_status = txn.status.value
         txn.bank_reference = event.bank_reference
         txn.received_at = datetime.utcnow()
         txn.status = (
             TransactionStatus.FEE_COLLECTED
             if status == BankEventStatus.APPLIED
             else TransactionStatus.NEEDS_REVIEW
+        )
+        memory_lock.capture(
+            db,
+            memory_lock.EventType.PAYMENT_STATUS_CHANGED,
+            {
+                "transaction_id": txn.id,
+                "from_status": previous_status,
+                "to_status": txn.status.value,
+                "currency": txn.currency,
+                "fee_minor": txn.platform_fee_minor,
+                "credited_minor": event.amount_minor,
+            },
+            auction_id=txn.listing_id,
         )
 
     db.commit()

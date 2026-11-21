@@ -133,3 +133,39 @@ pacific-rim-auctions/
 ├── .env.example
 └── .gitignore
 ```
+
+## Live bid engine, Crystal Memory Lock and operations
+
+**Bid engine** (`app/services/auction_engine.py`, rules in `auction_rules.py`): every bid is
+placed in one database transaction with the listing row locked. The server assigns the sequence
+number; the same bid sent twice (same `idempotency_key`) never counts twice. Minimum increment,
+30-second anti-sniping extension, KYC, seller-cannot-bid, currency match and compliance hold are
+enforced. Live updates: `/ws/listings/{id}?token=<login token>` (send `SYNC` for a full refresh).
+
+**Crystal Quartz Memory Lock** (`memory_core.py`, `memory_lock.py`): every bid, close, settlement,
+payment, compliance and algorithm event is appended to a SHA-256 hash chain, signed with
+Ed25519 **and** ML-DSA-65 (FIPS 204, post-quantum). Hourly the whole chain is re-verified; a result
+of `VERIFIED` means every record was recomputed. Admin reader page: `/crystal`.
+Offline check: `python scripts/verify_memory_export.py <export.json>` using only the public keys
+from `/api/v1/memory/public-key`.
+
+**Back up `MEMORY_SIGNING_SECRET`.** It derives the signing keys. Render generates it once; copy it
+somewhere safe. Changing it makes older signatures fail verification.
+
+**Physical archive handoff.** Nothing here writes quartz. `GET /memory/records/{n}/archive-package`
+produces the package for a provider; a record shows as archived only after a provider's
+confirmation with a matching `package_hash` is entered.
+
+**Operations (admin):** `/api/v1/si/capabilities`, `morning-briefing`, `company-status`,
+`tomorrow-prep`, `reconciliation`, `build-manifest`, `metrics`.
+
+### Not built, stated plainly
+- Quantum computing (no role in an auction; the post-quantum signature is the quantum-era feature).
+- Physical 5D quartz archiving (needs a provider; the handoff package is built).
+- seL4/Knox hardware hardening (hardware, not code).
+- Automatic generation of algorithm-improvement proposals (needs real telemetry); only approved,
+  bounded, evidence-backed changes with auto-revert are applied.
+- OneTrust's live API call (fail-closed adapter until its specification is supplied).
+- Memory "restore" tooling (export plus offline verifier only).
+- This full application has not yet been booted against a real database. First boot on Render is
+  the first real test, and nothing is "live" until a real bank credit arrives.

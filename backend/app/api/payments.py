@@ -10,7 +10,7 @@ from app.models.user import User
 from app.schemas.transaction import CheckoutCreate, PaymentInstructionOut
 from app.services import payments
 from app.services import money
-from app.services.fees import calculate_platform_fee_minor
+from app.services.fees import calculate_fee_minor_from_bps
 
 router = APIRouter(prefix="/payments", tags=["payments"])
 
@@ -36,7 +36,7 @@ def create_checkout(
         raise HTTPException(status_code=503, detail="Settlement destination is not configured yet.")
 
     sale_minor = money.usd_to_minor(checkout_in.sale_amount_usd)
-    fee_minor, rate_bps = calculate_platform_fee_minor(sale_minor, listing.platform_fee_rate)
+    fee_minor, rate_bps = calculate_fee_minor_from_bps(sale_minor, listing.platform_fee_rate_bps)
 
     transaction = Transaction(
         listing_id=listing.id,
