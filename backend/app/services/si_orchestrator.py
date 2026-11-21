@@ -32,7 +32,7 @@ from app.models.enums import AssetStatus, InspectionStatus, TransactionStatus
 from app.models.jurisdiction_node import JurisdictionNode, NodeStatus
 from app.models.listing import Inspection, Listing
 from app.models.transaction import Transaction
-from app.services import follow_the_sun, outreach, payments, resilience
+from app.services import money, follow_the_sun, outreach, payments, resilience
 
 
 def system_health_report(db: Session) -> dict:
@@ -136,7 +136,7 @@ def real_revenue_summary(db: Session) -> dict:
     endpoint, surfaced here as part of SI's report so the architect sees
     it alongside everything else in one place."""
     confirmed_fee_total = (
-        db.query(func.coalesce(func.sum(Transaction.platform_fee_usd), 0.0))
+        db.query(func.coalesce(func.sum(Transaction.platform_fee_minor), 0))
         .filter(Transaction.status == TransactionStatus.FEE_COLLECTED)
         .scalar()
     )
@@ -146,7 +146,9 @@ def real_revenue_summary(db: Session) -> dict:
         .scalar()
     )
     return {
-        "confirmed_platform_fee_revenue_usd": confirmed_fee_total,
+        "currency": "USD",
+        "confirmed_platform_fee_revenue_minor": int(confirmed_fee_total),
+        "confirmed_platform_fee_revenue": money.format_minor(int(confirmed_fee_total)),
         "confirmed_transaction_count": confirmed_count,
         "source_of_truth": "First Hawaiian Bank-confirmed credits only",
     }

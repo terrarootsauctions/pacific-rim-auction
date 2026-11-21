@@ -1,4 +1,5 @@
 from datetime import datetime
+from decimal import Decimal
 from typing import Optional
 
 from pydantic import BaseModel, Field
@@ -12,9 +13,10 @@ class TransactionOut(BaseModel):
     buyer_id: str
     seller_id: Optional[str]
     entity_code: str
-    sale_amount_usd: float
-    platform_fee_rate: float
-    platform_fee_usd: float
+    currency: str
+    sale_amount_minor: int
+    platform_fee_rate_bps: int
+    platform_fee_minor: int
     status: TransactionStatus
     payment_reference: Optional[str]
     bank_reference: Optional[str]
@@ -25,12 +27,14 @@ class TransactionOut(BaseModel):
 
 class CheckoutCreate(BaseModel):
     listing_id: str
-    sale_amount_usd: float = Field(gt=0)
+    # Dollars as an exact decimal with at most two places, e.g. "250000.00".
+    sale_amount_usd: Decimal = Field(gt=0, max_digits=15, decimal_places=2)
 
 
 class PaymentInstructionOut(BaseModel):
     transaction_id: str
-    amount_due_usd: float
+    amount_due_minor: int
+    amount_due: str  # fixed two-decimal string, e.g. "7500.00"
     currency: str
     pay_to: dict
     payment_reference: str

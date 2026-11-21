@@ -13,7 +13,7 @@ from app.models.ledger import BankEvent
 from app.models.transaction import Transaction
 from app.models.user import User
 from app.schemas.transaction import SettlementDestinationOut, SettlementDestinationUpdate
-from app.services import payments
+from app.services import money, payments
 from app.services.audit import record_audit_event
 
 router = APIRouter(prefix="/admin", tags=["admin"])
@@ -33,17 +33,17 @@ def get_real_revenue(
     admin: User = Depends(require_admin),
 ):
     """The ONLY revenue figure this platform will ever report: the sum of
-    platform_fee_usd across transactions whose exact fee credit First
+    platform_fee_minor (whole cents) across transactions whose exact fee credit First
     Hawaiian Bank has confirmed (status == FEE_COLLECTED). Until a real
     bank-confirmed credit exists, this returns zero - by design, not as a
     placeholder."""
     confirmed_fee_total = (
-        db.query(func.coalesce(func.sum(Transaction.platform_fee_usd), 0.0))
+        db.query(func.coalesce(func.sum(Transaction.platform_fee_minor), 0))
         .filter(Transaction.status == TransactionStatus.FEE_COLLECTED)
         .scalar()
     )
     confirmed_sale_total = (
-        db.query(func.coalesce(func.sum(Transaction.sale_amount_usd), 0.0))
+        db.query(func.coalesce(func.sum(Transaction.sale_amount_minor), 0))
         .filter(Transaction.status == TransactionStatus.FEE_COLLECTED)
         .scalar()
     )
@@ -55,8 +55,11 @@ def get_real_revenue(
 
     return {
         "source_of_truth": "First Hawaiian Bank-confirmed credits only (status=FEE_COLLECTED)",
-        "confirmed_platform_fee_revenue_usd": confirmed_fee_total,
-        "confirmed_gross_sale_volume_usd": confirmed_sale_total,
+        "currency": "USD",
+        "confirmed_platform_fee_revenue_minor": int(confirmed_fee_total),
+        "confirmed_platform_fee_revenue": money.format_minor(int(confirmed_fee_total)),
+        "confirmed_gross_sale_volume_minor": int(confirmed_sale_total),
+        "confirmed_gross_sale_volume": money.format_minor(int(confirmed_sale_total)),
         "confirmed_transaction_count": confirmed_transaction_count,
     }
 
