@@ -7,10 +7,10 @@ accepts any year, so records from 1845 through the present all fit.
 """
 from typing import Dict, List
 
-from app.models.enums import AssetCategory
-
-CATALOG: Dict[AssetCategory, List[str]] = {
-    AssetCategory.REAL_PROPERTY: [
+# Keys are the AssetCategory values (see app/models/enums.py). Plain strings
+# keep this module free of database imports; a test checks the keys match.
+CATALOG: Dict[str, List[str]] = {
+    "real_property": [
         "Residential homes and condominiums",
         "Luxury and ultra-luxury estates",
         "Commercial buildings and offices",
@@ -20,7 +20,7 @@ CATALOG: Dict[AssetCategory, List[str]] = {
         "Abandoned and derelict properties",
         "Tax-sale and foreclosure surplus funds",
     ],
-    AssetCategory.FINANCIAL: [
+    "financial": [
         "Dormant bank and credit union accounts",
         "Uncashed checks and final paychecks",
         "Stocks, dividends and bonds turned over to a state",
@@ -30,20 +30,20 @@ CATALOG: Dict[AssetCategory, List[str]] = {
         "Dormant digital-asset exchange accounts",
         "Refunds and security deposits",
     ],
-    AssetCategory.BUSINESS_CORPORATE: [
+    "business_corporate": [
         "Assets of dissolved companies",
         "Unclaimed stock certificates and shares",
         "Abandoned business equipment and inventory",
         "Vendor and customer credit balances",
     ],
-    AssetCategory.INSURANCE_BENEFITS: [
+    "insurance_benefits": [
         "Life insurance proceeds",
         "Annuities",
         "Pension and retirement benefits",
         "Health and property insurance refunds",
         "Government benefit and tax refunds",
     ],
-    AssetCategory.TRANSPORTATION: [
+    "transportation": [
         "Luxury yachts and motor vessels",
         "Cruise ships and large commercial vessels",
         "Aircraft",
@@ -51,7 +51,7 @@ CATALOG: Dict[AssetCategory, List[str]] = {
         "Abandoned and impounded vehicles",
         "Abandoned boats and marine equipment",
     ],
-    AssetCategory.PRECIOUS_COLLECTIBLE: [
+    "precious_collectible": [
         "Jewelry and watches",
         "Gold, silver and other precious metals",
         "Gemstones and diamonds",
@@ -59,27 +59,27 @@ CATALOG: Dict[AssetCategory, List[str]] = {
         "Coins, currency and stamps",
         "Antiques and rare collectibles",
     ],
-    AssetCategory.NATURAL_RESOURCE: [
+    "natural_resource": [
         "Mineral and royalty rights",
         "Oil and gas interests",
         "Mining claims",
         "Timber and land-use rights",
         "Water rights",
     ],
-    AssetCategory.INTANGIBLE_IP: [
+    "intangible_ip": [
         "Patents",
         "Trademarks",
         "Copyrights and royalty streams",
         "Domain names",
         "Licensing rights",
     ],
-    AssetCategory.ESTATE_TRUST_PROBATE: [
+    "estate_trust_probate": [
         "Intestate estates",
         "Unclaimed inheritances",
         "Unclaimed trust distributions",
         "Court-held probate funds",
     ],
-    AssetCategory.PUBLIC_UTILITY: [
+    "public_utility": [
         "Utility deposits and refunds",
         "Government-held funds",
         "Court-registry funds",
@@ -88,8 +88,9 @@ CATALOG: Dict[AssetCategory, List[str]] = {
 }
 
 
-def subtypes_for(category: AssetCategory) -> List[str]:
-    return list(CATALOG[category])
+def subtypes_for(category) -> List[str]:
+    key = getattr(category, "value", category)
+    return list(CATALOG[key])
 
 
 def all_subtypes() -> List[str]:
