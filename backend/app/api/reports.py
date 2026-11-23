@@ -4,6 +4,7 @@ not in Python. Admin and compliance officers only.
 
   GET /reports/assets-by-category   count and total estimated USD value per category and status
   GET /reports/assets-by-country    count and total estimated USD value per source country
+  GET /reports/assets-by-dormancy-decade   count and value by the decade the asset went dormant (1840s to now)
   GET /reports/claims-by-status     claim intakes per status and country
   GET /reports/commission           closed sales, gross sales and platform commission per currency
 
@@ -70,6 +71,19 @@ def assets_by_country(db: Session = Depends(get_db), _: User = Depends(require_r
         .all()
     )
     return [{"country": c, "count": n, "estimated_value_usd": float(v)} for c, n, v in rows]
+
+
+@router.get("/assets-by-dormancy-decade")
+def assets_by_dormancy_decade(db: Session = Depends(get_db), _: User = Depends(require_reviewer)) -> List[dict]:
+    decade = (Asset.dormant_since_year // 10) * 10
+    rows = (
+        db.query(decade, func.count(Asset.id), func.coalesce(func.sum(Asset.estimated_value_usd), 0.0))
+        .filter(Asset.dormant_since_year.isnot(None))
+        .group_by(decade)
+        .order_by(decade)
+        .all()
+    )
+    return [{"decade": int(d), "count": n, "estimated_value_usd": float(v)} for d, n, v in rows]
 
 
 @router.get("/claims-by-status")
