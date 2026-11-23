@@ -1,7 +1,7 @@
 """
-Fee service - calculates the platform's rolling 3-5% fee in exact whole
+Fee service - calculates the platform's rolling 5-8% fee in exact whole
 cents. Kept as a small set of functions so the rolling-scale logic (currently
-a flat caller-supplied rate clamped to the 3%-5% band) can evolve later
+a flat caller-supplied rate clamped to the 5%-8% band) can evolve later
 without touching every call site. All arithmetic is integer; see money.py.
 """
 from app.core.config import get_settings
@@ -11,7 +11,7 @@ settings = get_settings()
 
 
 def fee_band_bps() -> tuple:
-    """The mandated band as whole basis points (default 300 to 500)."""
+    """The mandated band as whole basis points (default 500 to 800)."""
     return (
         money.rate_to_bps(settings.platform_fee_min, 0, money.BPS_PER_UNIT),
         money.rate_to_bps(settings.platform_fee_max, 0, money.BPS_PER_UNIT),
@@ -20,7 +20,7 @@ def fee_band_bps() -> tuple:
 
 def clamp_fee_rate(requested_rate: float) -> float:
     """Ensure a fee rate always stays within the mandated band. Returns the
-    rate as a fraction (e.g. 0.03) for storage on the listing."""
+    rate as a fraction (e.g. 0.05) for storage on the listing."""
     low, high = fee_band_bps()
     return money.rate_to_bps(requested_rate, low, high) / money.BPS_PER_UNIT
 

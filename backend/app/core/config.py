@@ -74,9 +74,9 @@ class Settings(BaseSettings):
     # Shared secret used to verify incoming bank credit notifications.
     fhb_webhook_secret: str = ""
 
-    # --- Platform fee (the "rake"), as decimals e.g. 0.03 = 3% ---
-    platform_fee_min: float = 0.03
-    platform_fee_max: float = 0.05
+    # --- Platform fee (the "rake"), as decimals e.g. 0.05 = 5% ---
+    platform_fee_min: float = 0.05
+    platform_fee_max: float = 0.08
 
     # --- Reply.io (outreach: sellers, agents/brokers, buyer follow-up) ---
     reply_io_api_key: str = ""

@@ -16,7 +16,7 @@ inspection requirement, no TerraRoots involvement.
 
 Pacific Rim Auctions LLC takes no legal position in the underlying
 buyer/seller real estate transaction - it only facilitates discovery,
-transparency, and payment, and charges a 3-5% rolling platform fee on
+transparency, and payment, and charges a 5-8% rolling platform fee on
 closing costs.
 """
 import uuid
@@ -61,8 +61,8 @@ class Listing(Base):
     current_bid_minor = Column(BigInteger, nullable=True)
 
     # Platform fee actually applied to this listing, in whole basis points
-    # (300 = 3.00%), kept inside the mandated 3-5% band.
-    platform_fee_rate_bps = Column(Integer, nullable=False, default=300)
+    # (500 = 5.00%), kept inside the mandated 5-8% band.
+    platform_fee_rate_bps = Column(Integer, nullable=False, default=500)
 
     # Authoritative, server-side auction state. The browser never decides these.
     auction_sequence = Column(BigInteger, nullable=False, default=0)

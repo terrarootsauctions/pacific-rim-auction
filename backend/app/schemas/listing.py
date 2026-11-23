@@ -14,7 +14,7 @@ class ListingCreate(BaseModel):
     description: Optional[str] = None
     # Exact decimal dollars, at most two places (e.g. "250000.00").
     asking_price_usd: Optional[Decimal] = Field(default=None, gt=0, max_digits=15, decimal_places=2)
-    platform_fee_rate: Decimal = Field(default=Decimal("0.03"), ge=0, le=1)
+    platform_fee_rate: Decimal = Field(default=Decimal("0.05"), ge=0, le=1)
     starts_at: Optional[datetime] = None
     ends_at: Optional[datetime] = None
 

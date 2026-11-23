@@ -38,7 +38,7 @@ class Transaction(Base):
     entity_code = Column(String, nullable=False, default="PRA_LLC", index=True)
 
     # Money is whole cents (integers), never floats. The rate is whole basis
-    # points (300 = 3.00%), clamped to the mandated 3-5% band.
+    # points (500 = 5.00%), clamped to the mandated 5-8% band.
     currency = Column(String(3), nullable=False, default="USD")
     sale_amount_minor = Column(BigInteger, nullable=False)
     platform_fee_rate_bps = Column(Integer, nullable=False)
