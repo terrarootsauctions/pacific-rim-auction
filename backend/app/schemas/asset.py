@@ -1,9 +1,10 @@
 from datetime import datetime
 from typing import Optional
 
-from pydantic import BaseModel
+from pydantic import BaseModel, field_validator, model_validator
 
 from app.models.enums import AssetCategory, AssetStatus
+from app.services import dormancy
 
 
 class AssetCreate(BaseModel):
@@ -16,6 +17,18 @@ class AssetCreate(BaseModel):
     years_dormant: Optional[int] = None
     estimated_value_usd: Optional[float] = None
     provenance_notes: Optional[str] = None
+
+    @field_validator("dormant_since_year")
+    @classmethod
+    def _year_in_range(cls, v):
+        return dormancy.validate_dormant_since_year(v)
+
+    @model_validator(mode="after")
+    def _calculate_years_dormant(self):
+        # Calculated from the year, never typed in by hand.
+        if self.dormant_since_year is not None:
+            self.years_dormant = dormancy.years_dormant(self.dormant_since_year)
+        return self
 
 
 class AssetOut(BaseModel):
@@ -34,6 +47,13 @@ class AssetOut(BaseModel):
     created_at: datetime
 
     model_config = {"from_attributes": True}
+
+    @model_validator(mode="after")
+    def _fresh_years_dormant(self):
+        # Recalculated on every read, so stored values never go stale across years.
+        if self.dormant_since_year is not None:
+            self.years_dormant = dormancy.years_dormant(self.dormant_since_year)
+        return self
 
 
 class AssetStatusUpdate(BaseModel):
