@@ -32,7 +32,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.api import (
     admin, assets, audit_log, auth, bids, claims, crystal, jurisdiction_nodes, listings, memory,
-    outreach, payments, si, users, ws,
+    outreach, payments, reports, si, users, ws,
 )
 from app.core.config import get_settings
 from app.core.database import Base, SessionLocal, engine
@@ -89,6 +89,7 @@ app.include_router(auth.router, prefix=settings.api_v1_prefix)
 app.include_router(users.router, prefix=settings.api_v1_prefix)
 app.include_router(assets.router, prefix=settings.api_v1_prefix)
 app.include_router(claims.router, prefix=settings.api_v1_prefix)
+app.include_router(reports.router, prefix=settings.api_v1_prefix)
 app.include_router(listings.router, prefix=settings.api_v1_prefix)
 app.include_router(bids.router, prefix=settings.api_v1_prefix)
 app.include_router(payments.router, prefix=settings.api_v1_prefix)
