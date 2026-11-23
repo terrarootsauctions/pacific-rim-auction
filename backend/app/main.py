@@ -12,7 +12,7 @@ Entities served by this single codebase:
     no legal ties to either party. Mandatory licensed property inspection,
     air quality assessment, and mineral rights disclosure before any
     listing goes live, fully disclosed to the buyer prior to closing.
-    Charges a 3-5% rolling fee on closing costs. Also the direct
+    Charges a 5-8% rolling fee on closing costs. Also the direct
     marketplace for all non-real-property unclaimed asset categories.
   - TerraRoots Global Realty Solutions LLC: receives claimed real
     property from the umbrella and feeds it onto the Pacific Rim Auctions
