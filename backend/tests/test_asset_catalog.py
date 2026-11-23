@@ -25,5 +25,5 @@ def test_no_duplicate_entries():
 
 def test_catalog_covers_named_asset_kinds():
     text = " ".join(asset_catalog.all_subtypes()).lower()
-    for word in ("jewelry", "yachts", "cruise ships", "luxury", "bank", "mineral"):
+    for word in ("jewelry", "yachts", "cruise ships", "luxury", "bank", "mineral", "zombie foreclosures", "zombie titles", "payroll", "healthcare", "airline"):
         assert word in text
