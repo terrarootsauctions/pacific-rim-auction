@@ -42,6 +42,7 @@ class Settings(BaseSettings):
     background_enabled: bool = True
     auction_close_interval_seconds: int = 15
     memory_verify_interval_seconds: int = 3600
+    gate_recheck_interval_seconds: int = 86400  # daily pass over listings still waiting on the gate
 
     # --- OneTrust compliance checkpoint ---
     # The platform has a hard-coded compliance checkpoint. When ONETRUST_ENFORCE

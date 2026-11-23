@@ -6,6 +6,8 @@ from app.models.user import User  # noqa: F401
 from app.models.asset import Asset  # noqa: F401
 from app.models.listing import Listing, Inspection  # noqa: F401
 from app.models.bid import Bid  # noqa: F401
+from app.models.claim_intake import ClaimIntake  # noqa: F401
+from app.models.lawful_basis import LawfulBasis  # noqa: F401
 from app.models.transaction import Transaction  # noqa: F401
 from app.models.jurisdiction_node import JurisdictionNode  # noqa: F401
 from app.models.audit_log import AuditLog  # noqa: F401
