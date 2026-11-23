@@ -9,7 +9,7 @@ from datetime import datetime
 
 from app.core.config import get_settings
 from app.core.database import SessionLocal
-from app.services import auction_engine, memory_lock
+from app.services import auction_engine, memory_lock, publisher
 from app.services.realtime import manager
 
 log = logging.getLogger("pacific_rim.background")
@@ -51,6 +51,28 @@ async def verify_loop(stop: asyncio.Event) -> None:
                 log.error("MEMORY INTEGRITY FAILURE: %s", result)
         except Exception:  # noqa: BLE001
             log.exception("memory verification cycle failed; will retry")
+        try:
+            await asyncio.wait_for(stop.wait(), timeout=interval)
+        except asyncio.TimeoutError:
+            pass
+
+
+def _recheck_sync():
+    with SessionLocal() as db:
+        return publisher.recheck_all(db, datetime.utcnow())
+
+
+async def recheck_loop(stop: asyncio.Event) -> None:
+    """Daily gate recheck: listings still waiting on a legal-review result,
+    signature or recorded basis are tried again each pass, and the ones that
+    now qualify go live. Failures are logged and retried next pass."""
+    interval = max(300, get_settings().gate_recheck_interval_seconds)
+    while not stop.is_set():
+        try:
+            result = await asyncio.to_thread(_recheck_sync)
+            log.info("gate recheck: %s", result)
+        except Exception:  # noqa: BLE001
+            log.exception("gate recheck cycle failed; will retry")
         try:
             await asyncio.wait_for(stop.wait(), timeout=interval)
         except asyncio.TimeoutError:

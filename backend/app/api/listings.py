@@ -17,7 +17,7 @@ from app.schemas.listing import (
     ListingOut,
 )
 from app.services import compliance, money
-from app.services import auction_engine, memory_lock, onetrust
+from app.services import auction_engine, memory_lock, onetrust, publisher
 from app.services.audit import record_audit_event
 from app.services.fees import rate_bps
 
@@ -135,6 +135,11 @@ def publish_listing(
     ot_cleared, ot_reason = onetrust.check_listing(listing)
     if not ot_cleared:
         raise HTTPException(status_code=400, detail=ot_reason)
+
+    asset = db.query(Asset).filter(Asset.id == listing.asset_id).first()
+    gate_ok, gate_reasons, _basis = publisher.evaluate_asset_gate(db, asset)
+    if not gate_ok:
+        raise HTTPException(status_code=400, detail="; ".join(gate_reasons))
 
     listing.is_live = True
     memory_lock.capture(

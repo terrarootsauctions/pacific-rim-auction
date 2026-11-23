@@ -67,3 +67,49 @@ def check_listing(
             reasons.append(f"The {basis.replace('_', ' ')} reference is not recorded.")
 
     return (not reasons), reasons
+
+
+RECORDABLE_BASES = frozenset({BASIS_SELLER_TITLE, BASIS_GOVERNMENT_AUTHORITY, BASIS_COURT_ORDER})
+
+
+def validate_basis_record(basis: str, reference: Optional[str]) -> str:
+    """Check a lawful-basis record before it is stored. Owner authorization
+    is never recorded by hand: it is derived from a claim intake that has a
+    verified signature chain. Returns the cleaned reference."""
+    if basis not in RECORDABLE_BASES:
+        raise ValueError(
+            "Basis must be seller_title, government_authority or court_order. "
+            "Owner authorization comes from a signed claim intake, not a manual record."
+        )
+    ref = (reference or "").strip()
+    if basis in BASES_NEEDING_REFERENCE and not ref:
+        raise ValueError(f"A {basis.replace('_', ' ')} needs its reference recorded so legal review can verify it.")
+    return ref
+
+
+def check_any(
+    jurisdiction_cleared: bool,
+    do_no_harm_status: str,
+    candidates: Iterable[Dict],
+) -> Tuple[bool, List[str], Optional[str]]:
+    """Run the gate over every lawful-basis candidate on record for an asset.
+    Allowed if ANY candidate passes. Returns (allowed, reasons, basis_used).
+    With no candidates the reasons say no lawful basis is on record."""
+    best_reasons: Optional[List[str]] = None
+    for c in candidates:
+        ok, reasons = check_listing(
+            jurisdiction_cleared,
+            do_no_harm_status,
+            c.get("basis"),
+            c.get("reference"),
+            c.get("signing_events"),
+            c.get("document_sha256"),
+            bool(c.get("seller_holds_title", False)),
+        )
+        if ok:
+            return True, [], c.get("basis")
+        if best_reasons is None or len(reasons) < len(best_reasons):
+            best_reasons = reasons
+    if best_reasons is None:
+        _, best_reasons = check_listing(jurisdiction_cleared, do_no_harm_status, None)
+    return False, best_reasons, None

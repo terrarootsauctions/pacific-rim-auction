@@ -31,7 +31,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.api import (
-    admin, assets, audit_log, auth, bids, claims, crystal, jurisdiction_nodes, listings, memory,
+    admin, assets, audit_log, auth, bids, claims, crystal, jurisdiction_nodes, lawful_basis, listings, memory,
     outreach, payments, reports, si, users, ws,
 )
 from app.core.config import get_settings
@@ -59,6 +59,7 @@ async def lifespan(_app: FastAPI):
         tasks = [
             asyncio.create_task(background.close_loop(stop)),
             asyncio.create_task(background.verify_loop(stop)),
+            asyncio.create_task(background.recheck_loop(stop)),
         ]
     try:
         yield
@@ -90,6 +91,7 @@ app.include_router(users.router, prefix=settings.api_v1_prefix)
 app.include_router(assets.router, prefix=settings.api_v1_prefix)
 app.include_router(claims.router, prefix=settings.api_v1_prefix)
 app.include_router(reports.router, prefix=settings.api_v1_prefix)
+app.include_router(lawful_basis.router, prefix=settings.api_v1_prefix)
 app.include_router(listings.router, prefix=settings.api_v1_prefix)
 app.include_router(bids.router, prefix=settings.api_v1_prefix)
 app.include_router(payments.router, prefix=settings.api_v1_prefix)
