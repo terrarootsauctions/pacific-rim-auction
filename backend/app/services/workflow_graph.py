@@ -84,6 +84,12 @@ def validate(graph: Graph, start: str, handlers: Optional[Dict[str, Callable]] =
     return problems
 
 
+class Waiting(Exception):
+    """Raised by a handler when the step needs a person (or a real-world
+    event) before it can continue. The run pauses at that node and reports
+    the reason; nothing is skipped or assumed."""
+
+
 @dataclass
 class RunResult:
     status: str  # completed | paused | failed | step_limit
@@ -91,6 +97,7 @@ class RunResult:
     trace: List[dict]
     waiting_on: Optional[str] = None
     error: Optional[str] = None
+    reason: Optional[str] = None
 
 
 def run(graph: Graph, start: str, handlers: Dict[str, Callable], context: Optional[dict] = None,
@@ -121,6 +128,9 @@ def run(graph: Graph, start: str, handlers: Dict[str, Callable], context: Option
             continue
         try:
             result = handlers[node.handler](ctx)
+        except Waiting as wait:
+            trace.append({"step": step, "node": current, "event": "waiting", "reason": str(wait)})
+            return RunResult("paused", ctx, trace, waiting_on=current, reason=str(wait))
         except Exception as exc:  # a failed step stops the run; nothing is hidden
             trace.append({"step": step, "node": current, "event": "error", "error": str(exc)})
             return RunResult("failed", ctx, trace, error=f"{current}: {exc}")

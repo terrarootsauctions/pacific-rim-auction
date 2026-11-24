@@ -13,7 +13,9 @@ from app.api.admin import require_admin
 from app.core.database import get_db
 from app.models.ledger import LedgerEntry
 from app.models.user import User
-from app.services import account_validation, fhb_rail, ledger_consolidation, market_sim, workflow_graph
+from app.services import (
+    account_validation, fhb_rail, ledger_consolidation, market_sim, pipeline_runner, workflow_graph,
+)
 
 router = APIRouter(prefix="/admin/tools", tags=["admin-tools"])
 
@@ -61,6 +63,22 @@ def workflow(admin: User = Depends(require_admin)):
     """The platform pipeline as nodes and edges, with its soundness check."""
     g = workflow_graph.platform_pipeline()
     return {"graph": workflow_graph.describe(g), "problems": workflow_graph.validate(g, "registry_scan")}
+
+
+@router.get("/pipeline")
+def pipeline_open_assets(limit: int = 100, db: Session = Depends(get_db), admin: User = Depends(require_admin)):
+    """Where every non-final asset stands in the pipeline and what needs a human next. Read-only."""
+    return pipeline_runner.open_assets(db, max(1, min(limit, 200)))
+
+
+@router.get("/pipeline/{asset_id}")
+def pipeline_position(asset_id: str, db: Session = Depends(get_db), admin: User = Depends(require_admin)):
+    """One asset's position in the pipeline, read from real records. Read-only: it never creates,
+    approves, publishes or pays anything."""
+    out = pipeline_runner.position(db, asset_id)
+    if out["error"] == "registry_scan: Asset not found.":
+        raise HTTPException(status_code=404, detail="Asset not found")
+    return out
 
 
 @router.post("/simulate")
