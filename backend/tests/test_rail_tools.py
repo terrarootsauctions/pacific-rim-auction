@@ -4,7 +4,7 @@ from datetime import datetime, timedelta, timezone
 import pytest
 
 from app.services import (
-    account_validation as av, anomaly, fhb_rail, ledger_consolidation as lc, market_sim, optimizer,
+    account_validation as av, anomaly, fhb_rail, ledger_consolidation as lc, optimizer,
     workflow_graph as wg,
 )
 
@@ -187,19 +187,7 @@ def test_annealing_is_deterministic_and_feasible_for_large():
     assert a == b and a["method"] == "annealing" and a["total_cost_minor"] <= 800
 
 
-# ---- simulator / ledger ---------------------------------------------------
-
-def test_simulation_deterministic_and_fee_band_ordering():
-    a = market_sim.simulate(2000, 10_000_000)
-    b = market_sim.simulate(2000, 10_000_000)
-    assert a == b
-    fees = a["estimated_fee_total_minor_by_bps"]
-    assert fees[500] < fees[650] < fees[800]
-    assert 0 < a["sold_rate"] <= 1
-    assert a["price_p10_minor"] <= a["price_p50_minor"] <= a["price_p90_minor"]
-    with pytest.raises(ValueError):
-        market_sim.simulate(0, 100)
-
+# ---- ledger ----------------------------------------------------------------
 
 def test_ledger_consolidation():
     rows = [

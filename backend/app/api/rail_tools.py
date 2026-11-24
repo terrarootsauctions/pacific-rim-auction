@@ -1,7 +1,7 @@
 """
 Admin-only, READ-ONLY tools for the First Hawaiian Bank rail and the
 platform pipeline. Nothing here moves money, posts a ledger entry or changes
-a record. Every endpoint reports, validates or simulates.
+a record. Every endpoint reports or validates.
 """
 from typing import Optional
 
@@ -14,7 +14,7 @@ from app.core.database import get_db
 from app.models.ledger import LedgerEntry
 from app.models.user import User
 from app.services import (
-    account_validation, fhb_rail, ledger_consolidation, market_sim, pipeline_runner, workflow_graph,
+    account_validation, fhb_rail, ledger_consolidation, pipeline_runner, workflow_graph,
 )
 
 router = APIRouter(prefix="/admin/tools", tags=["admin-tools"])
@@ -29,12 +29,6 @@ class IdentifiersIn(BaseModel):
 class Bai2In(BaseModel):
     text: str = Field(max_length=500_000)
 
-
-class SimulateIn(BaseModel):
-    n_auctions: int = Field(default=1000, ge=1, le=20000)
-    reserve_minor: int = Field(gt=0)
-    seed: int = 11
-    mean_bidders: float = Field(default=3.0, ge=0, le=50)
 
 
 @router.get("/cutoffs")
@@ -92,15 +86,6 @@ def pipeline_position(asset_id: str, db: Session = Depends(get_db), admin: User 
     if out["error"] == "registry_scan: Asset not found.":
         raise HTTPException(status_code=404, detail="Asset not found")
     return out
-
-
-@router.post("/simulate")
-def simulate(body: SimulateIn, admin: User = Depends(require_admin)):
-    """What-if auction simulation. An estimate under stated assumptions, never revenue."""
-    try:
-        return market_sim.simulate(body.n_auctions, body.reserve_minor, body.seed, body.mean_bidders)
-    except ValueError as exc:
-        raise HTTPException(status_code=422, detail=str(exc))
 
 
 @router.get("/ledger-consolidated")
