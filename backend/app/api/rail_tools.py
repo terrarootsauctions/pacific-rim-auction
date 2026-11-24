@@ -71,6 +71,19 @@ def pipeline_open_assets(limit: int = 100, db: Session = Depends(get_db), admin:
     return pipeline_runner.open_assets(db, max(1, min(limit, 200)))
 
 
+@router.get("/pass-report")
+def pass_report_preview(db: Session = Depends(get_db), admin: User = Depends(require_admin)):
+    """What moved, stalled, completed or got blocked since the last saved pass. Preview only: saves nothing."""
+    return pipeline_runner.run_pass(db, save=False)
+
+
+@router.post("/pass-report/run")
+def pass_report_run(db: Session = Depends(get_db), admin: User = Depends(require_admin)):
+    """Same report, and saves this pass as the baseline for the next one. The only thing written
+    is a snapshot row; no asset, listing, ledger entry or payment is touched."""
+    return pipeline_runner.run_pass(db, save=True)
+
+
 @router.get("/pipeline/{asset_id}")
 def pipeline_position(asset_id: str, db: Session = Depends(get_db), admin: User = Depends(require_admin)):
     """One asset's position in the pipeline, read from real records. Read-only: it never creates,
