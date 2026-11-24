@@ -16,3 +16,4 @@ from app.models.precedent_log import PrecedentLog  # noqa: F401
 from app.models.ledger import BankEvent, LedgerEntry, SettlementDestination  # noqa: F401
 from app.models.memory import MemoryArchive, MemoryChainHead, MemoryRecord, MemoryVerification  # noqa: F401
 from app.models.algorithm import AlgorithmParameter  # noqa: F401
+from app.models.pass_snapshot import PassSnapshot  # noqa: F401

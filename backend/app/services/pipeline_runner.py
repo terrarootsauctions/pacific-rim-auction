@@ -6,6 +6,7 @@ READ-ONLY. It never creates, approves, publishes or pays anything. It reuses
 the platform's existing gate (publisher.evaluate_asset_gate), so the Do No
 Harm and Follow the Laws checks are the same ones the publish step applies.
 """
+import json
 from typing import List, Optional
 
 from sqlalchemy.orm import Session
@@ -14,8 +15,9 @@ from app.models.asset import Asset
 from app.models.entity_handoff import EntityHandoff
 from app.models.enums import AssetStatus
 from app.models.listing import Listing
+from app.models.pass_snapshot import PassSnapshot
 from app.models.transaction import Transaction
-from app.services import entities, fees, pipeline_handlers, publisher, workflow_graph
+from app.services import entities, fees, pass_report, pipeline_handlers, publisher, workflow_graph
 
 TERMINAL_STATUSES = (AssetStatus.SOLD, AssetStatus.REJECTED, AssetStatus.WITHDRAWN)
 
@@ -83,3 +85,27 @@ def open_assets(db: Session, limit: int = 100) -> List[dict]:
         .filter(~Asset.status.in_(TERMINAL_STATUSES)).order_by(Asset.created_at).limit(limit).all()
     ]
     return [position(db, i) for i in ids]
+
+
+def _last_snapshot(db: Session) -> Optional[dict]:
+    row = db.query(PassSnapshot).order_by(PassSnapshot.id.desc()).first()
+    if row is None:
+        return None
+    try:
+        return json.loads(row.data_json)
+    except ValueError:
+        return None  # an unreadable snapshot is treated as a first pass
+
+
+def run_pass(db: Session, save: bool = False, limit: int = 200) -> dict:
+    """Compare every open asset with the previous saved pass. With save=True
+    the new positions are stored as the next pass's baseline (the only write,
+    and it touches nothing but the snapshot table)."""
+    positions = open_assets(db, limit)
+    report = pass_report.compare(_last_snapshot(db), positions, truncated=len(positions) >= limit)
+    snapshot = report.pop("snapshot")
+    if save:
+        db.add(PassSnapshot(data_json=json.dumps(snapshot)))
+        db.commit()
+    report["saved"] = save
+    return report
