@@ -79,6 +79,12 @@ def get_destination(db: Session) -> SettlementDestination:
         db.add(dest)
         db.commit()
         db.refresh(dest)
+    elif settings.fhb_account_number and dest.account_number != settings.fhb_account_number:
+        # The environment is the source of truth: if the account number was
+        # empty when this row was first created, pick it up once it is set.
+        dest.account_number = settings.fhb_account_number
+        db.commit()
+        db.refresh(dest)
     return dest
 
 
