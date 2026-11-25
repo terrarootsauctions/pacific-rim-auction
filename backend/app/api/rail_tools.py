@@ -13,6 +13,8 @@ from app.api.admin import require_admin
 from app.core.database import get_db
 from app.models.ledger import LedgerEntry
 from app.models.user import User
+from app.core.config import get_settings
+from app.services import sanctions
 from app.services import (
     account_validation, fhb_rail, ledger_consolidation, pipeline_runner, workflow_graph,
 )
@@ -94,3 +96,27 @@ def ledger_consolidated(db: Session = Depends(get_db), admin: User = Depends(req
     rows = [(e.entity_code, e.account_code, e.debit_minor, e.credit_minor)
             for e in db.query(LedgerEntry).all()]
     return ledger_consolidation.consolidate(rows)
+
+
+class ScreenIn(BaseModel):
+    names: list[str] = Field(min_length=1, max_length=20)
+
+
+@router.get("/sanctions")
+def sanctions_status(admin: User = Depends(require_admin)):
+    """Is the OFAC list loaded, how old is it, and is screening switched on?"""
+    return {**sanctions.SCREENER.status(), "enforcing": get_settings().sanctions_screening_enabled}
+
+
+@router.post("/sanctions/refresh")
+def sanctions_refresh(admin: User = Depends(require_admin)):
+    """Fetch the official list now (works even while enforcement is off, so you can check it first)."""
+    s = get_settings()
+    ok = sanctions.SCREENER.fetch(s.ofac_sdn_csv_url, s.ofac_alt_csv_url)
+    return {"refreshed": ok, **sanctions.SCREENER.status()}
+
+
+@router.post("/sanctions/screen")
+def sanctions_screen(body: ScreenIn, admin: User = Depends(require_admin)):
+    """Screen names against the loaded list. Read-only; blocks when the list is missing or stale."""
+    return sanctions.SCREENER.screen(body.names)

@@ -12,6 +12,7 @@ from app.models.user import User
 from app.schemas.bid import BidCreate, BidOut, BidResult
 from app.services import auction_engine, money
 from app.services.governance_store import enforce
+from app.services.sanctions_gate import enforce as sanctions_enforce
 from app.services.ratelimit import SlidingWindowLimiter
 from app.services.realtime import manager
 
@@ -38,6 +39,7 @@ async def place_bid(
 
     amount_minor = money.usd_to_minor(bid_in.amount_usd)
     enforce(db, "PLACE_BID", amount_minor)
+    sanctions_enforce(db, current_user, "PLACE_BID")
 
     def run():
         return auction_engine.place_bid(

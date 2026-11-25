@@ -78,6 +78,11 @@ class Settings(BaseSettings):
     platform_fee_min: float = 0.05
     platform_fee_max: float = 0.08
 
+    # --- OFAC sanctions screening (fail-closed; off until you turn it on after /admin/tools/sanctions shows loaded) ---
+    sanctions_screening_enabled: bool = False
+    ofac_sdn_csv_url: str = "https://sanctionslistservice.ofac.treas.gov/api/PublicationPreview/exports/SDN.CSV"
+    ofac_alt_csv_url: str = "https://sanctionslistservice.ofac.treas.gov/api/PublicationPreview/exports/ALT.CSV"
+
     # --- Reply.io (outreach: sellers, agents/brokers, buyer follow-up) ---
     reply_io_api_key: str = ""
     reply_io_base_url: str = "https://api.reply.io/v3"
