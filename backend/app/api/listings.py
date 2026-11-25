@@ -19,6 +19,7 @@ from app.schemas.listing import (
 from app.services import compliance, money
 from app.services import auction_engine, memory_lock, onetrust, publisher
 from app.services.audit import record_audit_event
+from app.services.governance_store import enforce
 from app.services.fees import rate_bps
 
 router = APIRouter(prefix="/listings", tags=["listings"])
@@ -30,6 +31,7 @@ def create_listing(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
+    enforce(db, "CREATE_LISTING")
     asset = db.query(Asset).filter(Asset.id == listing_in.asset_id).first()
     if not asset:
         raise HTTPException(status_code=404, detail="Asset not found")
@@ -123,6 +125,7 @@ def publish_listing(
 ):
     """Attempt to take a listing live. Blocked by the compliance gate if
     required inspections aren't completed+disclosed yet."""
+    enforce(db, "PUBLISH_LISTING")
     listing = db.query(Listing).filter(Listing.id == listing_id).first()
     if not listing:
         raise HTTPException(status_code=404, detail="Listing not found")

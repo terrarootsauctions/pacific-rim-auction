@@ -11,6 +11,7 @@ from app.models.bid import Bid
 from app.models.user import User
 from app.schemas.bid import BidCreate, BidOut, BidResult
 from app.services import auction_engine, money
+from app.services.governance_store import enforce
 from app.services.ratelimit import SlidingWindowLimiter
 from app.services.realtime import manager
 
@@ -36,6 +37,7 @@ async def place_bid(
                                                      "message": "Too many bids; slow down."})
 
     amount_minor = money.usd_to_minor(bid_in.amount_usd)
+    enforce(db, "PLACE_BID", amount_minor)
 
     def run():
         return auction_engine.place_bid(
