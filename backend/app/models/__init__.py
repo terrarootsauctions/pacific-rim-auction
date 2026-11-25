@@ -17,3 +17,4 @@ from app.models.ledger import BankEvent, LedgerEntry, SettlementDestination  # n
 from app.models.memory import MemoryArchive, MemoryChainHead, MemoryRecord, MemoryVerification  # noqa: F401
 from app.models.algorithm import AlgorithmParameter  # noqa: F401
 from app.models.pass_snapshot import PassSnapshot  # noqa: F401
+from app.models.governance import GovernanceState  # noqa: F401
