@@ -27,6 +27,11 @@ from typing import Dict, Iterable, List, Optional
 MAX_AGE = timedelta(hours=72)
 MIN_ENTRIES_SANITY = 1000      # the real SDN list has many thousands of rows
 _NULL = "-0-"
+FALLBACK_URLS = [
+    ("https://www.treasury.gov/ofac/downloads/sdn.csv", "https://www.treasury.gov/ofac/downloads/alt.csv"),
+    ("https://www.treasury.gov/resource-center/sanctions/SDN-List/Documents/sdn.csv",
+     "https://www.treasury.gov/resource-center/sanctions/SDN-List/Documents/alt.csv"),
+]
 
 
 def tokens(name: Optional[str]) -> frozenset:
@@ -66,20 +71,25 @@ class Screener:
             self.last_error = None
 
     def fetch(self, sdn_url: str, alt_url: str, now: Optional[datetime] = None) -> bool:
+        """Try the configured addresses first, then OFAC's other published addresses.
+        The first pair that downloads AND passes the size check is used."""
         import requests  # in requirements.txt
         now = now or datetime.utcnow()
         self.last_attempt = now
-        try:
-            texts = []
-            for url in (sdn_url, alt_url):
-                r = requests.get(url, timeout=60, headers={"User-Agent": "PacificRimAuctions-Screening/1.0"})
-                r.raise_for_status()
-                texts.append(r.content.decode("utf-8", errors="replace"))
-            self.load_csv(texts[0], texts[1], now)
-            return True
-        except Exception as exc:  # keep any previously loaded list; staleness is checked on use
-            self.last_error = f"{type(exc).__name__}: {exc}"[:300]
-            return False
+        errors = []
+        for sdn, alt in [(sdn_url, alt_url), *FALLBACK_URLS]:
+            try:
+                texts = []
+                for url in (sdn, alt):
+                    r = requests.get(url, timeout=60, headers={"User-Agent": "PacificRimAuctions-Screening/1.0"})
+                    r.raise_for_status()
+                    texts.append(r.content.decode("utf-8", errors="replace"))
+                self.load_csv(texts[0], texts[1], now)
+                return True
+            except Exception as exc:  # keep any previously loaded list; staleness is checked on use
+                errors.append(f"{sdn}: {type(exc).__name__}: {exc}"[:200])
+        self.last_error = " | ".join(errors)[:900]
+        return False
 
     # ---- screening -------------------------------------------------------
     def status(self, now: Optional[datetime] = None) -> dict:

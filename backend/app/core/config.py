@@ -78,8 +78,8 @@ class Settings(BaseSettings):
     platform_fee_min: float = 0.05
     platform_fee_max: float = 0.08
 
-    # --- OFAC sanctions screening (fail-closed; off until you turn it on after /admin/tools/sanctions shows loaded) ---
-    sanctions_screening_enabled: bool = False
+    # --- OFAC sanctions screening: ON by default, fail-closed. Set SANCTIONS_SCREENING_ENABLED=false only to switch it off. ---
+    sanctions_screening_enabled: bool = True
     ofac_sdn_csv_url: str = "https://sanctionslistservice.ofac.treas.gov/api/PublicationPreview/exports/SDN.CSV"
     ofac_alt_csv_url: str = "https://sanctionslistservice.ofac.treas.gov/api/PublicationPreview/exports/ALT.CSV"
 
