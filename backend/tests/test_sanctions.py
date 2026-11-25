@@ -57,3 +57,28 @@ def test_no_name_and_stale_block():
 
 def test_any_screened_name_hit_blocks():
     assert loaded().screen(["Jane Doe", "Rosneft"], NOW)["clear"] is False
+
+
+def test_fetch_falls_back_to_next_address(monkeypatch):
+    import requests
+    big = "\n".join(f'{i},"PERSON{i} NAME{i}",individual,P,-0-' for i in range(1100))
+
+    class R:
+        def __init__(self, ok, text=""): self.ok, self.content = ok, text.encode()
+        def raise_for_status(self):
+            if not self.ok: raise requests.HTTPError("404")
+
+    def fake_get(url, **kw):
+        return R("treasury.gov/ofac/downloads" in url, big if "sdn" in url else '1,1,aka,"X Y",-0-')
+    monkeypatch.setattr(requests, "get", fake_get)
+    sc = s.Screener()
+    assert sc.fetch("https://bad.example/sdn.csv", "https://bad.example/alt.csv", NOW) is True
+    assert sc.status(NOW)["entries"] >= 1100
+
+
+def test_fetch_failure_stays_blocked(monkeypatch):
+    import requests
+    monkeypatch.setattr(requests, "get", lambda *a, **k: (_ for _ in ()).throw(requests.ConnectionError("down")))
+    sc = s.Screener()
+    assert sc.fetch("https://a/sdn.csv", "https://a/alt.csv", NOW) is False
+    assert sc.screen(["Jane Doe"], NOW)["reason"] == "SDN_LIST_NOT_LOADED" and sc.last_error
