@@ -36,7 +36,7 @@ from app.api import (
 )
 from app.core.config import get_settings
 from app.core.database import Base, SessionLocal, engine
-from app.services import background, bootstrap, evolution, memory_lock, sanctions
+from app.services import background, bootstrap, evolution, memory_lock, principal_decisions, sanctions
 
 settings = get_settings()
 log = logging.getLogger("pacific_rim")
@@ -53,6 +53,8 @@ async def lifespan(_app: FastAPI):
         if status:
             log.warning("[bootstrap] %s", status)
         evolution.get_params(db)
+        for line in principal_decisions.apply_recorded_decisions(db):
+            log.warning("[principal-decision] %s", line)
     stop = asyncio.Event()
     tasks = []
     if settings.background_enabled:
