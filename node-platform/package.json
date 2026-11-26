@@ -1,0 +1,14 @@
+{
+  "name": "pacific-rim-auctions",
+  "version": "2.0.0",
+  "description": "Pacific Rim Auctions - live - 190 countries + Unclaimed + Marketplace - Postgres-backed",
+  "main": "src/server.js",
+  "private": true,
+  "scripts": {
+    "start": "node src/server.js",
+    "test": "node test/run.js",
+    "pack": "node tools/pack.js"
+  },
+  "engines": { "node": ">=20" },
+  "dependencies": { "pg": "^8.13.0" }
+}

@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Pacific Rim Auctions</title>
+<style>
+:root{--bg:#fff;--fg:#14213d;--mut:#5a6578;--card:#f4f6fa;--ok:#0a7a3d;--bad:#b3261e}
+@media (prefers-color-scheme:dark){:root{--bg:#0e1420;--fg:#e8edf6;--mut:#9aa6bb;--card:#18202f;--ok:#4cc38a;--bad:#ff8a80}}
+body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.5 system-ui,sans-serif}
+main{max-width:640px;margin:0 auto;padding:24px 16px}
+h1{font-size:1.5rem;margin:0 0 4px}p{color:var(--mut);margin:0 0 16px}
+.card{background:var(--card);border-radius:12px;padding:16px;margin-bottom:12px}
+.row{display:flex;justify-content:space-between;gap:12px;padding:4px 0}.row b.ok{color:var(--ok)}.row b.bad{color:var(--bad)}
+a{color:inherit}
+</style></head><body><main>
+<h1>Pacific Rim Auctions</h1>
+<p>Live platform status. Administration is at <a href="/admin">/admin</a> (SI token required).</p>
+<div class="card" id="s">Loading status…</div>
+<script>
+fetch('/health').then(r=>r.json()).then(j=>{
+  const rows=[['Platform',j.ok?'Live':'Down',j.ok],['Database',j.database,j.database==='connected'],['SI permission active',j.permissionActive?'Yes':'No',j.permissionActive],['Kill switch',j.killed?'ON':'Off',!j.killed],['Countries loaded',j.wired?j.wired.countriesLoaded:'-',true],['Audit entries',j.audit?j.audit.count:'-',true]];
+  document.getElementById('s').innerHTML=rows.map(r=>'<div class="row"><span>'+r[0]+'</span><b class="'+(r[2]?'ok':'bad')+'">'+r[1]+'</b></div>').join('');
+}).catch(()=>{document.getElementById('s').textContent='Status unavailable.'});
+</script></main></body></html>
