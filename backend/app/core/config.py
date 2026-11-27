@@ -97,6 +97,9 @@ class Settings(BaseSettings):
     # --- Reply.io (outreach: sellers, agents/brokers, buyer follow-up) ---
     reply_io_api_key: str = ""
     reply_io_base_url: str = "https://api.reply.io/v3"
+    # Secret placed in the webhook address Reply.io posts to (their docs do not describe signed
+    # webhooks). Long and random. Unset = the webhook receiver refuses everything.
+    reply_io_webhook_secret: str = ""
 
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8")
 
