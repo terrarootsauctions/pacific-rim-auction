@@ -18,7 +18,7 @@ from app.core.database import get_db
 from app.models.jurisdiction_node import JurisdictionNode
 from app.models.user import User
 from app.core.config import get_settings
-from app.services import astra_docs, astra_draft, audit, legal_review
+from app.services import astra_docs, astra_draft, audit, doc_completeness, legal_review
 
 router = APIRouter(prefix="/legal-review", tags=["legal-review"])
 
@@ -94,5 +94,26 @@ def document_check(body: DocCheckIn, db: Session = Depends(get_db), user: User =
     audit.record_audit_event(db, user.id, "document_check", (body.reference or "unspecified")[:100], "astra_document_check",
                              actor_role=str(getattr(user.role, "value", user.role)),
                              notes=f"model={out['model']} statements={len(body.statements)}")
+    db.commit()
+    return out
+
+
+class CompletenessIn(BaseModel):
+    doc_type: str
+    document_text: str
+    reference: str = ""
+
+
+@router.post("/document-completeness")
+def document_completeness(body: CompletenessIn, db: Session = Depends(get_db), user: User = Depends(require_admin_or_compliance)):
+    """Our own rules, no outside service: which expected elements appear in a document, with the exact words.
+    Presence check only; records nothing except an audit entry (no document text in it)."""
+    try:
+        out = doc_completeness.check_completeness(body.doc_type, body.document_text)
+    except doc_completeness.DocError as exc:
+        raise HTTPException(status_code=422, detail=str(exc))
+    audit.record_audit_event(db, user.id, "document_check", (body.reference or "unspecified")[:100], "document_completeness_check",
+                             actor_role=str(getattr(user.role, "value", user.role)),
+                             notes=f"type={body.doc_type} missing={len(out['missing'])}")
     db.commit()
     return out
