@@ -119,3 +119,23 @@ def get_campaign_stats(campaign_id: str) -> dict:
     """Pull real performance stats (sent, opened, replied) for a campaign -
     the only numbers that should ever be reported as outreach results."""
     return _request("GET", f"{settings.reply_io_base_url}/campaigns/{campaign_id}/stats")
+
+
+# ---- Webhooks (Reply.io's documented /v3/webhooks endpoints) ----
+def list_webhook_events() -> dict:
+    """Authoritative list of event names Reply.io can send (GET /v3/webhooks/events)."""
+    return _request("GET", f"{settings.reply_io_base_url}/webhooks/events")
+
+
+def create_webhook(event_type: str, url: str) -> dict:
+    return _request("POST", f"{settings.reply_io_base_url}/webhooks",
+                    json={"eventType": event_type, "url": url, "scope": "personal"})
+
+
+def test_webhook(webhook_id: str) -> dict:
+    return _request("POST", f"{settings.reply_io_base_url}/webhooks/{webhook_id}/test")
+
+
+def get_webhook_logs(webhook_id: str) -> dict:
+    """Failed-delivery log for one subscription (GET /v3/webhooks/{id}/logs)."""
+    return _request("GET", f"{settings.reply_io_base_url}/webhooks/{webhook_id}/logs")
