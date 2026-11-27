@@ -17,7 +17,7 @@ import json
 import re
 from typing import Callable, Dict, List
 
-from app.services.astra_draft import AstraError, _default_post, is_configured
+from app.services.astra_draft import AstraError, _default_post, call_responses, is_configured
 
 class RequestError(AstraError):
     """The caller's request was wrong (HTTP 422), as opposed to a provider failure (502)."""
@@ -57,7 +57,7 @@ def build_messages(document_text: str, statements: List[str]) -> List[Dict[str, 
         "You check whether a document supports statements. Use ONLY the document text provided. For each statement "
         "answer one of: supported, not_supported, unclear. 'supported' requires an exact quote copied word for word "
         "from the document. If the document does not clearly say it, answer unclear. Do not use outside knowledge. "
-        'Reply with JSON only: {"results": [{"index": int, "verdict": str, "quote": str}]} with index starting at 0.'
+        "Index statements from 0. Give one result per statement."
     )
     user = "DOCUMENT:\n" + document_text + "\n\nSTATEMENTS:\n" + "\n".join(f"{i}. {s}" for i, s in enumerate(statements))
     return [{"role": "system", "content": system}, {"role": "user", "content": user}]
@@ -93,21 +93,18 @@ def verify_results(content: str, document_text: str, statements: List[str]) -> L
     return findings
 
 
+RESULT_SCHEMA = {"type": "object", "additionalProperties": False, "required": ["results"], "properties": {"results": {
+    "type": "array", "items": {"type": "object", "additionalProperties": False, "required": ["index", "verdict", "quote"],
+                               "properties": {"index": {"type": "integer"}, "verdict": {"type": "string", "enum": list(VERDICTS)},
+                                              "quote": {"type": "string"}}}}}}
+
+
 def check_document(document_text, statements, confirm_send_to_provider, *, api_key, model,
-                   base_url="https://api.openai.com/v1", timeout=120, post: Callable = _default_post) -> dict:
+                   base_url="https://api.openai.com/v1", timeout=120, effort="high", post: Callable = _default_post) -> dict:
     if not is_configured(api_key, model):
         raise AstraError("Astra is not configured (OPENAI_API_KEY and ASTRA_MODEL are required).")
     sts = validate_request(document_text, statements, confirm_send_to_provider)
-    body = {"model": model, "messages": build_messages(document_text, sts), "response_format": {"type": "json_object"}}
-    try:
-        resp = post(base_url.rstrip("/") + "/chat/completions",
-                    {"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"}, body, timeout)
-    except Exception as exc:
-        raise AstraError(f"Could not reach the model provider: {type(exc).__name__}.")
-    if getattr(resp, "status_code", 0) != 200:
-        raise AstraError(f"The model provider returned HTTP {getattr(resp, 'status_code', '?')}; nothing was checked.")
-    try:
-        content = resp.json()["choices"][0]["message"]["content"]
-    except (KeyError, IndexError, TypeError, ValueError):
-        raise AstraError("The model provider's reply was not in the expected format; nothing was checked.")
+    content, _ = call_responses(api_key=api_key, model=model, base_url=base_url, timeout=timeout, post=post,
+                                messages=build_messages(document_text, sts), schema_name="document_check",
+                                schema=RESULT_SCHEMA, effort=effort, web_search=False)
     return {"findings": verify_results(content, document_text, sts), "notice": NOTICE, "model": model}
