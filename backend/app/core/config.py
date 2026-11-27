@@ -83,6 +83,15 @@ class Settings(BaseSettings):
     ofac_sdn_csv_url: str = "https://sanctionslistservice.ofac.treas.gov/api/PublicationPreview/exports/SDN.CSV"
     ofac_alt_csv_url: str = "https://sanctionslistservice.ofac.treas.gov/api/PublicationPreview/exports/ALT.CSV"
 
+    # --- Astra legal drafting (OpenAI API) ---
+    # Drafts legal research packets for a human to verify and sign. It can never
+    # clear a jurisdiction. Not configured = the draft endpoint refuses (fails closed).
+    # ASTRA_MODEL must be the exact model id shown in your OpenAI account.
+    openai_api_key: str = ""
+    openai_base_url: str = "https://api.openai.com/v1"
+    astra_model: str = ""
+    astra_timeout_seconds: int = 120
+
     # --- Reply.io (outreach: sellers, agents/brokers, buyer follow-up) ---
     reply_io_api_key: str = ""
     reply_io_base_url: str = "https://api.reply.io/v3"
