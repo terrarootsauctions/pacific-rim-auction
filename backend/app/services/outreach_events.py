@@ -13,9 +13,11 @@ import hmac
 import json
 from typing import Any, Optional
 
-from sqlalchemy.orm import Session
+from typing import TYPE_CHECKING
 
-from app.models.outreach_event import OutreachEvent
+if TYPE_CHECKING:
+    from sqlalchemy.orm import Session
+
 
 SUPPRESSING_EVENTS = {"contact_opted_out"}
 SUBSCRIBE_EVENTS = ["email_replied", "reply_categorized", "email_bounced", "contact_opted_out",
@@ -58,7 +60,8 @@ def extract_email(payload: Any) -> Optional[str]:
     return e.lower() if e else None
 
 
-def record_event(db: Session, payload: Any) -> OutreachEvent:
+def record_event(db: "Session", payload: Any):
+    from app.models.outreach_event import OutreachEvent
     if not isinstance(payload, (dict, list)):
         raise EventError("Event body must be a JSON object.")
     etype = extract_event_type(payload) or "unknown"
@@ -68,7 +71,8 @@ def record_event(db: Session, payload: Any) -> OutreachEvent:
     return ev
 
 
-def is_suppressed(db: Session, email: str) -> bool:
+def is_suppressed(db: "Session", email: str) -> bool:
+    from app.models.outreach_event import OutreachEvent
     if not email:
         return False
     return db.query(OutreachEvent.id).filter(OutreachEvent.email == email.strip().lower(),
