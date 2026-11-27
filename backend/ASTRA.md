@@ -32,3 +32,10 @@ Each statement comes back supported / not_supported / unclear. "supported" alway
 - Only the country code, name and region are sent for drafting. Document text is sent only for document-check, and only when `confirm_send_to_provider` is true.
 - Every use is written to the audit log (no document text in it).
 - Billing is by OpenAI per use. Ask OpenAI about Zero Data Retention for your account before sending sensitive documents.
+
+## Key-free tool: document completeness (always on, no OpenAI key)
+`POST /api/v1/legal-review/document-completeness` (admin or compliance)
+```json
+{ "doc_type": "deed", "document_text": "<full text>", "reference": "listing-or-claim-id" }
+```
+`doc_type`: `deed`, `power_of_attorney`, `court_order`, `claim_agreement`. Returns each expected element as found (with the exact words from the document) or missing. It checks presence only and never says a document is valid; the checklists live in `app/services/doc_completeness.py` (edit them there, with your attorney) and are starting points, not legal advice. Runs on your own servers, no outside service, no cost per use.
