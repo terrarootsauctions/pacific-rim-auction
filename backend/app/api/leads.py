@@ -81,7 +81,8 @@ def import_open_data(body: ImportOpenData, db: Session = Depends(get_db), admin:
     return _ingest(db, rows, body.mapping, f"{body.domain}/{body.dataset_id}")
 
 
-def _filtered(db: Session, states, min_score, all_flags, any_flags, has_email, has_phone, county, status, limit, sort="revenue"):
+def _filtered(db: Session, states, min_score, all_flags, any_flags, has_email, has_phone, county, status, limit, sort="revenue",
+              include_expired=False):
     q = db.query(PropertyLead)
     if states:
         q = q.filter(PropertyLead.state.in_([s.upper() for s in states]))
@@ -97,6 +98,8 @@ def _filtered(db: Session, states, min_score, all_flags, any_flags, has_email, h
         q = q.filter(PropertyLead.county.ilike(county))
     rows = [_to_dict(r) for r in q.order_by(PropertyLead.score.desc()).limit(50000).all()]
     rows = [r for r in rows if lead_engine.matches(r, all_flags=all_flags, any_flags=any_flags)]
+    if not include_expired:
+        rows = [r for r in rows if "claims_expired" not in r["flags"]]   # closed-claim leads are never shown or worked
     if sort == "revenue":
         rows.sort(key=lambda r: (r["est_revenue"], r["score"]), reverse=True)
     return rows[:limit]
@@ -158,7 +161,7 @@ def push_to_outreach(body: PushIn, db: Session = Depends(get_db), admin: User = 
     """Sends new leads that have an email to a real Reply.io campaign. Opted-out emails are skipped and
     marked do_not_contact. Each lead is marked contacted only after Reply.io accepted it."""
     rows = _filtered(db, body.states, body.min_score, body.all_flags, body.any_flags, True, False, body.county,
-                     "new", min(max(body.limit, 1), 200))
+                     "new", min(max(body.limit, 1), 200), include_expired=body.include_claims_expired)
     sent, skipped, failed, held = 0, 0, [], 0
     for r in rows:
         if "claims_expired" in r["flags"] and not body.include_claims_expired:
@@ -204,4 +207,5 @@ def lead_sources_status(db: Session = Depends(get_db), admin: User = Depends(req
                     "passes": c.pages_done if c else 0, "last_run": c.last_run.isoformat() if c and c.last_run else None,
                     "last_result": c.last_result if c else None, "last_error": c.last_error if c else None})
     total = db.query(PropertyLead).count()
-    return {"worker_enabled": get_settings().lead_loop_enabled, "sources": out, "total_leads": total}
+    hidden = db.query(PropertyLead).filter(PropertyLead.flags.like("%claims_expired%")).count()
+    return {"worker_enabled": get_settings().lead_loop_enabled, "sources": out, "total_leads": total, "hidden_claims_closed": hidden}

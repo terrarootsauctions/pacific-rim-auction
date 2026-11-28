@@ -113,3 +113,9 @@ Queensland unclaimed monies `872065ae-ddfd-4b5f-ad15-e1935dadd883` (data.qld.gov
 `6d9458b5-a448-454c-a559-f368c36ec674` (discover.data.vic.gov.au), Canada unclaimed estate or trust funds
 `42006fa6-5068-4dfe-ba63-037c0fe1fa65` (open.canada.ca/data). Each source is worked only while its `timezone` is
 in daylight, so as Kauai goes dark the worker is already on Asia-Pacific, then Europe, then the Americas.
+
+## 10. Closed-claim leads are hidden
+Leads whose source says the claim deadline has passed (`claims_expired`) no longer appear in `GET /leads`,
+`/leads/export.csv` or outreach. They are still re-read each pass by the worker; if a source re-lists them with
+an open deadline the flag clears and they appear again at once. `GET /leads/sources/status` shows how many are
+hidden (`hidden_claims_closed`). Only `push-outreach` with `"include_claims_expired": true` brings them back.
