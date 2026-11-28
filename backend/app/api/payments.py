@@ -28,14 +28,22 @@ def create_checkout(
     listing = db.query(Listing).filter(Listing.id == checkout_in.listing_id).first()
     if not listing:
         raise HTTPException(status_code=404, detail="Listing not found")
-    if not listing.is_live:
+    # An auction that has closed is no longer "live" (closing switches that off), but its winner must still be
+    # able to pay. For a closed auction only the winning bidder may check out, at the recorded winning bid; the
+    # amount is never taken from the request. A listing still live (fixed price) is paid as before.
+    closed_winner_sale_minor = None
+    if listing.closed_at is not None and listing.winner_id:
+        if current_user.id != listing.winner_id:
+            raise HTTPException(status_code=403, detail="Only the winning bidder can pay for this listing")
+        closed_winner_sale_minor = int(listing.winning_bid_minor)
+    elif not listing.is_live:
         raise HTTPException(status_code=400, detail="Listing is not live")
 
     # Fail before creating anything if the bank destination is not set up.
     if not payments.get_destination(db).account_number:
         raise HTTPException(status_code=503, detail="Settlement destination is not configured yet.")
 
-    sale_minor = money.usd_to_minor(checkout_in.sale_amount_usd)
+    sale_minor = closed_winner_sale_minor if closed_winner_sale_minor is not None else money.usd_to_minor(checkout_in.sale_amount_usd)
     fee_minor, rate_bps = calculate_fee_minor_from_bps(sale_minor, listing.platform_fee_rate_bps)
 
     transaction = Transaction(
