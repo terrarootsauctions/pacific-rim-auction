@@ -85,7 +85,7 @@ variable, `LEAD_SOURCES_JSON` - a JSON list, one entry per open-data table:
 
 ## 7. Revenue ranking
 Every lead carries `est_revenue` (and a `revenue` breakdown): Stage A = the unclaimed amount held for the owner
-(100% to Pacific Rim Auctions / TerraRoots), Stage B = 3% of assessed value (low end of your 3-5% scale). These are
+(100% to Pacific Rim Auctions / TerraRoots), Stage B = 5% of assessed value (low end of the 5-8% fee band). These are
 estimates from the record's own numbers, not forecasts. `GET /leads`, `/leads/export.csv` and
 `POST /leads/push-outreach` all work the highest `est_revenue` first, so outreach capacity goes to the biggest
 opportunities first. Leads whose records have neither an amount nor an assessed value rank last.
