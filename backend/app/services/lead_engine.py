@@ -329,14 +329,14 @@ def split_owner_name(owner: Optional[str]) -> Tuple[Optional[str], Optional[str]
     return parts[0], parts[-1], None
 
 
-STAGE_B_RATE = 0.03   # low end of the 3-5% rolling scale on a marketplace closing
+STAGE_B_RATE = 0.05   # low end of the 5-8% marketplace fee band (the platform clamps fees to 5-8%)
 
 
 def revenue_estimate(lead: dict) -> dict:
     """What a lead could be worth to Pacific Rim, from the owner's stated revenue model - an ESTIMATE
     from the record's own numbers, not a forecast of what will close.
       stage_a: money held for the owner (amount_owed) - Stage A keeps 100% of proceeds.
-      stage_b: a marketplace sale of the property - 3% of assessed value (low end of the 3-5% scale).
+      stage_b: a marketplace sale of the property - 5% of assessed value (low end of the 5-8% fee band).
     'best' is the larger; 'basis' says which one it is."""
     fl = lead.get("flags") or []
     a = round(lead.get("amount_owed") or 0, 2) if ("unclaimed_funds" in fl and "claims_expired" not in fl) else 0.0
