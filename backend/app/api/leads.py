@@ -111,7 +111,7 @@ def list_leads(states: Optional[List[str]] = Query(None), min_score: int = 0,
                has_email: bool = False, has_phone: bool = False, county: Optional[str] = None,
                status: Optional[str] = None, limit: int = 100,
                db: Session = Depends(get_db), admin: User = Depends(require_admin)):
-    """List stacking: all_flags = must have every one; any_flags = at least one. Highest estimated revenue first (est_revenue = Stage A: unclaimed amount held, 100%; Stage B: 3% of assessed value; estimates from the record, not forecasts)."""
+    """List stacking: all_flags = must have every one; any_flags = at least one. Highest estimated revenue first (est_revenue = Stage A: unclaimed amount held, 100%; Stage B: 5% of assessed value; estimates from the record, not forecasts)."""
     rows = _filtered(db, states, min_score, all_flags, any_flags, has_email, has_phone, county, status,
                      min(max(limit, 1), 1000))
     return {"count": len(rows), "leads": rows}

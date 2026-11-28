@@ -168,4 +168,4 @@ says was a guess (not the bank's real specification), and any credit that did no
   UNAPPLIED_RECEIPTS to REVENUE. Audited.
 * Still required in Render: `FHB_ACCOUNT_NUMBER` (checkout is refused without it) and, to accept bank notifications,
   `FHB_WEBHOOK_SECRET`. Each transaction's fee rate is clamped to 5-8% by the platform's fee code; if your Stage B scale
-  is 3-5%, that clamp is the thing to change (not changed here).
+  The 5-8% clamp matches your Stage B fee band and stays as is.
