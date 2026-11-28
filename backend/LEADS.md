@@ -99,3 +99,6 @@ What happens to money after a deadline is each jurisdiction's law, not this code
 "DEADLINE FOR CLAIMS HAS EXPIRED. CLAIMS WILL NOT BE ACCEPTED." and refers to KCC Sec. 5A-5.9, whose text I could
 not retrieve. Get that section (rpc@kauai.gov, 808-241-4272) or run the country legal-review draft
 (`POST /legal-review/draft/{node_id}`, needs OPENAI_API_KEY) for each country before relying on expired funds.
+
+`push-outreach` takes `"include_claims_expired": true` to contact `claims_expired` leads as well (default false).
+Your campaign text decides what owners are told; the county's listing for those says claims will not be accepted.

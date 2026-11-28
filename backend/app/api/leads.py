@@ -150,6 +150,7 @@ class PushIn(BaseModel):
     any_flags: Optional[List[str]] = None
     county: Optional[str] = None
     limit: int = 100   # max 200 per call
+    include_claims_expired: bool = False   # True = also contact leads whose source says the claim deadline passed
 
 
 @router.post("/push-outreach")
@@ -160,7 +161,7 @@ def push_to_outreach(body: PushIn, db: Session = Depends(get_db), admin: User = 
                      "new", min(max(body.limit, 1), 200))
     sent, skipped, failed, held = 0, 0, [], 0
     for r in rows:
-        if "claims_expired" in r["flags"]:
+        if "claims_expired" in r["flags"] and not body.include_claims_expired:
             held += 1   # the source says claims are closed; not told they can claim until the source reopens them
             continue
         row = db.query(PropertyLead).filter(PropertyLead.id == r["id"]).first()
