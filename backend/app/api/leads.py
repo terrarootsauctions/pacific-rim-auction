@@ -81,7 +81,7 @@ def import_open_data(body: ImportOpenData, db: Session = Depends(get_db), admin:
     return _ingest(db, rows, body.mapping, f"{body.domain}/{body.dataset_id}")
 
 
-def _filtered(db: Session, states, min_score, all_flags, any_flags, has_email, has_phone, county, status, limit):
+def _filtered(db: Session, states, min_score, all_flags, any_flags, has_email, has_phone, county, status, limit, sort="revenue"):
     q = db.query(PropertyLead)
     if states:
         q = q.filter(PropertyLead.state.in_([s.upper() for s in states]))
@@ -97,6 +97,8 @@ def _filtered(db: Session, states, min_score, all_flags, any_flags, has_email, h
         q = q.filter(PropertyLead.county.ilike(county))
     rows = [_to_dict(r) for r in q.order_by(PropertyLead.score.desc()).limit(50000).all()]
     rows = [r for r in rows if lead_engine.matches(r, all_flags=all_flags, any_flags=any_flags)]
+    if sort == "revenue":
+        rows.sort(key=lambda r: (r["est_revenue"], r["score"]), reverse=True)
     return rows[:limit]
 
 
@@ -106,7 +108,7 @@ def list_leads(states: Optional[List[str]] = Query(None), min_score: int = 0,
                has_email: bool = False, has_phone: bool = False, county: Optional[str] = None,
                status: Optional[str] = None, limit: int = 100,
                db: Session = Depends(get_db), admin: User = Depends(require_admin)):
-    """List stacking: all_flags = must have every one; any_flags = at least one. Best score first."""
+    """List stacking: all_flags = must have every one; any_flags = at least one. Highest estimated revenue first (est_revenue = Stage A: unclaimed amount held, 100%; Stage B: 3% of assessed value; estimates from the record, not forecasts)."""
     rows = _filtered(db, states, min_score, all_flags, any_flags, has_email, has_phone, county, status,
                      min(max(limit, 1), 1000))
     return {"count": len(rows), "leads": rows}

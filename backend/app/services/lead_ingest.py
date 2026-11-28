@@ -8,7 +8,7 @@ from app.services import lead_engine
 
 
 def _to_dict(r: PropertyLead) -> dict:
-    return {
+    d = {
         "id": r.id, "owner_name": r.owner_name, "address": r.address, "mailing_address": r.mailing_address,
         "city": r.city, "state": r.state, "zip": r.zip, "county": r.county, "parcel_id": r.parcel_id,
         "email": r.email, "phone": r.phone, "assessed_value": r.assessed_value, "mortgage_balance": r.mortgage_balance,
@@ -16,6 +16,9 @@ def _to_dict(r: PropertyLead) -> dict:
         "flags": [f for f in (r.flags or "").split(";") if f], "score": r.score, "status": r.status, "source": r.source,
         "dedupe_key": r.dedupe_key,
     }
+    d["revenue"] = lead_engine.revenue_estimate(d)
+    d["est_revenue"] = d["revenue"]["best"]
+    return d
 
 
 _FIELDS = ("owner_name", "address", "mailing_address", "city", "state", "zip", "county", "parcel_id", "email",
