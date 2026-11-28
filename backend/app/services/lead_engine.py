@@ -55,7 +55,7 @@ ALIASES = {
 
 DISTRESS_FLAGS = {
     "tax_delinquent": 25, "pre_foreclosure": 25, "probate": 20, "unclaimed_funds": 20, "code_violation": 10,
-    "lien": 10, "vacant": 15, "absentee_owner": 10, "out_of_state_owner": 8, "high_equity": 12,
+    "lien": 10, "vacant": 15, "claims_expired": 0, "absentee_owner": 10, "out_of_state_owner": 8, "high_equity": 12,
 }
 _FLAG_WORDS = {
     "tax_delinquent": ("tax delinquent", "delinquent tax", "tax_delinquent", "taxdelinquent", "delinquent"),
@@ -65,6 +65,8 @@ _FLAG_WORDS = {
     "code_violation": ("code violation", "code_violation", "violation"),
     "lien": ("lien",),
     "vacant": ("vacant", "abandoned"),
+    "claims_expired": ("claims will not be accepted", "deadline for claims has expired", "claims deadline expired",
+                       "claim deadline expired", "deadline expired", "claim period expired", "time to claim has expired"),
 }
 _TRUE = {"1", "true", "yes", "y", "t"}
 _EMAIL = re.compile(r"^[A-Z0-9._%+\-]+@[A-Z0-9.\-]+\.[A-Z]{2,}$", re.I)
@@ -231,7 +233,10 @@ def merge_leads(old: dict, new: dict) -> dict:
             continue
         if v not in (None, "") and out.get(k) in (None, ""):
             out[k] = v
-    out["flags"] = sorted(set(old.get("flags") or []) | set(new.get("flags") or []))
+    flags = set(old.get("flags") or []) | set(new.get("flags") or [])
+    if "claims_expired" not in (new.get("flags") or []):
+        flags.discard("claims_expired")
+    out["flags"] = sorted(flags)
     out["dedupe_key"] = old.get("dedupe_key") or new.get("dedupe_key")
     out["score"], _ = score_lead(out)
     return out
@@ -333,6 +338,7 @@ def revenue_estimate(lead: dict) -> dict:
       stage_a: money held for the owner (amount_owed) - Stage A keeps 100% of proceeds.
       stage_b: a marketplace sale of the property - 3% of assessed value (low end of the 3-5% scale).
     'best' is the larger; 'basis' says which one it is."""
-    a = round(lead.get("amount_owed") or 0, 2) if "unclaimed_funds" in (lead.get("flags") or []) else 0.0
+    fl = lead.get("flags") or []
+    a = round(lead.get("amount_owed") or 0, 2) if ("unclaimed_funds" in fl and "claims_expired" not in fl) else 0.0
     b = round((lead.get("assessed_value") or 0) * STAGE_B_RATE, 2)
     return {"stage_a": a, "stage_b": b, "best": max(a, b), "basis": "stage_a" if a >= b and a > 0 else ("stage_b" if b > 0 else "none")}

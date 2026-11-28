@@ -158,8 +158,11 @@ def push_to_outreach(body: PushIn, db: Session = Depends(get_db), admin: User = 
     marked do_not_contact. Each lead is marked contacted only after Reply.io accepted it."""
     rows = _filtered(db, body.states, body.min_score, body.all_flags, body.any_flags, True, False, body.county,
                      "new", min(max(body.limit, 1), 200))
-    sent, skipped, failed = 0, 0, []
+    sent, skipped, failed, held = 0, 0, [], 0
     for r in rows:
+        if "claims_expired" in r["flags"]:
+            held += 1   # the source says claims are closed; not told they can claim until the source reopens them
+            continue
         row = db.query(PropertyLead).filter(PropertyLead.id == r["id"]).first()
         if outreach_events.is_suppressed(db, r["email"]):
             row.status = "do_not_contact"
@@ -181,7 +184,7 @@ def push_to_outreach(body: PushIn, db: Session = Depends(get_db), admin: User = 
         row.status = "contacted"
         db.commit()
         sent += 1
-    return {"considered": len(rows), "sent": sent, "skipped_opted_out": skipped, "failed": failed}
+    return {"considered": len(rows), "sent": sent, "skipped_opted_out": skipped, "held_claims_expired": held, "failed": failed}
 
 
 @router.get("/sources/status")
