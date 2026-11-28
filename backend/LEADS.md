@@ -89,3 +89,13 @@ Every lead carries `est_revenue` (and a `revenue` breakdown): Stage A = the uncl
 estimates from the record's own numbers, not forecasts. `GET /leads`, `/leads/export.csv` and
 `POST /leads/push-outreach` all work the highest `est_revenue` first, so outreach capacity goes to the biggest
 opportunities first. Leads whose records have neither an amount nor an assessed value rank last.
+
+## 8. Expired claim deadlines (re-checked every pass)
+A row whose source says the claim deadline has expired / claims will not be accepted is flagged `claims_expired`.
+It stays in the table, and the worker re-reads its source every pass: if the source later re-lists it without that
+wording (a reopened or new deadline), the flag clears and the lead becomes claimable again, with its Stage A
+revenue estimate back. While flagged, `push-outreach` holds it (`held_claims_expired`) and Stage A counts 0.
+What happens to money after a deadline is each jurisdiction's law, not this code: Kauai's own listing says
+"DEADLINE FOR CLAIMS HAS EXPIRED. CLAIMS WILL NOT BE ACCEPTED." and refers to KCC Sec. 5A-5.9, whose text I could
+not retrieve. Get that section (rpc@kauai.gov, 808-241-4272) or run the country legal-review draft
+(`POST /legal-review/draft/{node_id}`, needs OPENAI_API_KEY) for each country before relying on expired funds.
