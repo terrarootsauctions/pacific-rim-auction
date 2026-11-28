@@ -33,7 +33,7 @@ def fetch_socrata(domain: str, dataset_id: str, *, limit: int = 1000, offset: in
                   where: Optional[str] = None, app_token: Optional[str] = None, get=requests.get) -> List[dict]:
     validate_portal(domain, dataset_id)
     limit = max(1, min(int(limit), MAX_ROWS))
-    params = {"$limit": limit, "$offset": max(0, int(offset))}
+    params = {"$limit": limit, "$offset": max(0, int(offset)), "$order": ":id"}
     if where:
         params["$where"] = where
     headers = {"X-App-Token": app_token} if app_token else {}
