@@ -19,4 +19,4 @@ from app.models.algorithm import AlgorithmParameter  # noqa: F401
 from app.models.pass_snapshot import PassSnapshot  # noqa: F401
 from app.models.governance import GovernanceState  # noqa: F401
 from app.models.outreach_event import OutreachEvent  # noqa: F401
-from app.models.property_lead import PropertyLead  # noqa: F401
+from app.models.property_lead import LeadSourceCursor, PropertyLead  # noqa: F401

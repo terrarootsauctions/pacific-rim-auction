@@ -52,3 +52,26 @@ the payload; events with no findable email are stored but cannot block anyone.
 * The data is whatever the sources give you; this does not contain a nationwide property database.
 * Owner emails/phones exist only if a source supplied them. Without an email a lead cannot go to Reply.io.
 * Jason AI's approval queue and sequence building stay inside Reply.io (no documented API paths).
+
+## 6. Continuous search - 24/7, follows the sun
+The platform runs a lead worker all day, every day (it starts with the platform; `LEAD_LOOP_ENABLED=true`
+by default; `LEAD_LOOP_INTERVAL_SECONDS` default 600). Tell it where to look with one Render environment
+variable, `LEAD_SOURCES_JSON` - a JSON list, one entry per open-data table:
+
+```
+[{"name":"norfolk-tax","domain":"data.norfolk.gov","dataset_id":"7qie-z5gv","timezone":"America/New_York",
+  "page_size":2000,"flags":"tax_delinquent",
+  "mapping":{"owner_name":"owner_name","address":"address","amount_owed":"total"}},
+ {"name":"richmond-tax","domain":"data.richmondgov.com","dataset_id":"83t5-hbac","timezone":"America/New_York",
+  "page_size":2000,"flags":"tax_delinquent",
+  "mapping":{"owner_name":"current_owner_name_1","parcel_id":"property_code","amount_owed":"total_due"}}]
+```
+* `timezone` = where that source's region is. The source is worked while it is daytime there, so as the
+  sun moves, the worker is always working a region in daylight. Leave it out to work a source around the clock.
+* Each pass pulls the next `page_size` rows, cleans/dedupes/scores them into the lead table and remembers its
+  place (survives restarts). At the end of a table it starts over on the next daytime pass to catch new records.
+* `flags` stamps every row from that source (use it when the table is, say, all tax-delinquent).
+* One broken source never stops the rest. `GET /leads/sources/status` shows each source, whether it is working
+  now, its place, and its last result or error.
+* Add more sources by editing `LEAD_SOURCES_JSON` and redeploying. A source needs a real Socrata table:
+  find one on the portal's page for the dataset (the `abcd-1234` id in its address).
