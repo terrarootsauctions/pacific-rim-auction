@@ -141,3 +141,9 @@ asset naming you as reviewer, and skips (and lists) assets whose country node is
 It does not make anything live: the country node must also be ACTIVE (`PATCH /jurisdiction-nodes/{id}/review`), and the lawful basis
 and, for real property, the three inspections must be on record. Assets not yet VERIFIED are not touched; verify them first with
 `PATCH /assets/{id}/status`.
+
+## 12. Auction winners can now pay (fixed)
+Closing an auction sets the listing to not-live, and checkout used to refuse any listing that was not live, so a
+winner could never pay and no fee could be collected. Now, for a closed auction with a winner, `POST /payments/checkout`
+works only for the winning bidder and always uses the recorded winning bid (the amount in the request is ignored).
+Live fixed-price listings are unchanged.
