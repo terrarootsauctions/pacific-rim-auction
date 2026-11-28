@@ -68,10 +68,17 @@ variable, `LEAD_SOURCES_JSON` - a JSON list, one entry per open-data table:
 ```
 * `timezone` = where that source's region is. The source is worked while it is daytime there, so as the
   sun moves, the worker is always working a region in daylight. Leave it out to work a source around the clock.
-* Each pass pulls the next `page_size` rows, cleans/dedupes/scores them into the lead table and remembers its
+* Each cycle keeps pulling the next `page_size` rows (up to 50 pages or ~7 minutes per source) until the table is done, cleans/dedupes/scores them into the lead table and remembers its
   place (survives restarts). At the end of a table it starts over on the next daytime pass to catch new records.
 * `flags` stamps every row from that source (use it when the table is, say, all tax-delinquent).
 * One broken source never stops the rest. `GET /leads/sources/status` shows each source, whether it is working
   now, its place, and its last result or error.
 * Add more sources by editing `LEAD_SOURCES_JSON` and redeploying. A source needs a real Socrata table:
   find one on the portal's page for the dataset (the `abcd-1234` id in its address).
+
+### Nothing skipped silently
+* Pages are read in a fixed order (`$order=:id`), so the portal cannot repeat or skip rows between pages.
+* Several rows for the same property (years, installments) are added into one lead's `amount_owed`.
+* A row is rejected only if it has neither a street address nor a parcel id. Every import and every worker pass
+  reports `received`, `distinct_properties` and `rejected` with the reasons; see `last_result` in `GET /leads/sources/status`.
+  If a portal's rejected count is high, its column names need a `mapping` entry.

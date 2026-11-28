@@ -36,19 +36,19 @@ _SUFFIX = {"STREET": "ST", "AVENUE": "AVE", "BOULEVARD": "BLVD", "DRIVE": "DR", 
 
 # Column names seen in county files / CSVs -> the canonical field they mean.
 ALIASES = {
-    "owner_name": ["owner", "ownername", "owner_name", "name", "owner1", "taxpayer", "property_owner"],
+    "owner_name": ["owner", "ownername", "owner_name", "name", "owner1", "taxpayer", "property_owner", "current_owner_name_1", "current_owner", "owner_name_1", "owner_1"],
     "address": ["address", "site_address", "situs", "situs_address", "property_address", "street_address", "location"],
     "mailing_address": ["mailing_address", "mail_address", "owner_address", "mailing"],
     "city": ["city", "site_city", "situs_city"],
     "state": ["state", "site_state", "st"],
     "zip": ["zip", "zipcode", "zip_code", "postal_code", "site_zip"],
     "county": ["county", "county_name"],
-    "parcel_id": ["parcel", "parcel_id", "parcel_number", "apn", "pin", "tms", "folio"],
+    "parcel_id": ["parcel", "parcel_id", "parcel_number", "apn", "pin", "tms", "folio", "property_code", "account", "account_number", "acct", "tmk"],
     "email": ["email", "owner_email", "e-mail", "email_address"],
     "phone": ["phone", "owner_phone", "telephone", "mobile", "phone_number"],
     "assessed_value": ["assessed_value", "value", "market_value", "total_value", "assessed"],
     "mortgage_balance": ["mortgage_balance", "loan_balance", "open_loan_balance", "mortgage"],
-    "amount_owed": ["amount_owed", "taxes_owed", "delinquent_amount", "amount_due", "surplus_amount", "amount", "balance_due"],
+    "amount_owed": ["amount_owed", "taxes_owed", "delinquent_amount", "amount_due", "surplus_amount", "amount", "balance_due", "total_due", "total", "taxdue"],
     "property_type": ["property_type", "use_code", "land_use", "type"],
     "flags": ["flags", "distress", "distress_flags", "tags"],
 }
@@ -151,8 +151,6 @@ def normalize_record(raw: Dict[str, Any], mapping: Optional[Dict[str, str]] = No
     if not address and not parcel:
         return None, "no address or parcel id"
     state = normalize_state(m.get("state"))
-    if _s(m.get("state")) and not state:
-        return None, f"unrecognized state '{_s(m.get('state'))}'"
     lead = {
         "owner_name": _s(m.get("owner_name")).title() or None,
         "address": address,
@@ -225,8 +223,11 @@ def score_lead(lead: dict) -> Tuple[int, List[str]]:
 def merge_leads(old: dict, new: dict) -> dict:
     """Same property seen again: keep what is known, fill blanks from the new record, union the flags."""
     out = dict(old)
+    a, b = old.get("amount_owed"), new.get("amount_owed")
+    if a is not None or b is not None:
+        out["amount_owed"] = max(x for x in (a, b) if x is not None)
     for k, v in new.items():
-        if k in ("flags", "score", "dedupe_key"):
+        if k in ("flags", "score", "dedupe_key", "amount_owed"):
             continue
         if v not in (None, "") and out.get(k) in (None, ""):
             out[k] = v
@@ -249,7 +250,15 @@ def normalize_batch(rows: Iterable[dict], mapping: Optional[Dict[str, str]] = No
             rejected.append({"row": i, "reason": why})
             continue
         k = lead["dedupe_key"]
-        good[k] = merge_leads(good[k], lead) if k in good else lead
+        if k in good:
+            # the same property on several rows = several bills (years, installments): add them up
+            amounts = [x for x in (good[k].get("amount_owed"), lead.get("amount_owed")) if x is not None]
+            good[k] = merge_leads(good[k], lead)
+            if amounts:
+                good[k]["amount_owed"] = round(sum(amounts), 2)
+                good[k]["score"], _ = score_lead(good[k])
+        else:
+            good[k] = lead
     return list(good.values()), rejected
 
 

@@ -13,6 +13,7 @@ and shown at GET /leads/sources/status. Reports only what a source returned - no
 import asyncio
 import json
 import logging
+import time
 from datetime import datetime
 from typing import List, Optional
 
@@ -22,6 +23,9 @@ from app.models.property_lead import LeadSourceCursor
 from app.services import follow_the_sun, lead_ingest, public_sources
 
 log = logging.getLogger("pacific_rim.leads")
+
+MAX_PAGES_PER_SOURCE_PER_CYCLE = 50
+SOURCE_TIME_BUDGET_SECONDS = 420
 
 
 def load_sources(raw: str) -> List[dict]:
@@ -59,6 +63,7 @@ def source_is_active(src: dict, now_utc: Optional[datetime] = None) -> bool:
 def run_source_once(db, src: dict) -> dict:
     """One page of one source. Updates the cursor. Never raises."""
     name = src["name"]
+    more = False
     cur = db.query(LeadSourceCursor).filter(LeadSourceCursor.name == name).first()
     if cur is None:
         cur = LeadSourceCursor(name=name, offset=0, pages_done=0)
@@ -74,7 +79,8 @@ def run_source_once(db, src: dict) -> dict:
         cur.offset = 0 if len(rows) < page else cur.offset + len(rows)
         cur.pages_done = (cur.pages_done or 0) + 1
         cur.last_error = None
-        cur.last_result = json.dumps({k: result[k] for k in ("received", "inserted", "updated", "rejected")})
+        cur.last_result = json.dumps({k: result[k] for k in ("received", "distinct_properties", "inserted", "updated", "rejected", "rejected_reasons")})
+        more = len(rows) >= page
     except Exception as exc:  # noqa: BLE001
         db.rollback()
         cur = db.query(LeadSourceCursor).filter(LeadSourceCursor.name == name).first() or LeadSourceCursor(
@@ -84,7 +90,7 @@ def run_source_once(db, src: dict) -> dict:
         log.warning("lead source %s failed: %s", name, exc)
     cur.last_run = datetime.utcnow()
     db.commit()
-    return {"name": name, "last_result": cur.last_result, "last_error": cur.last_error}
+    return {"name": name, "more": more, "last_result": cur.last_result, "last_error": cur.last_error}
 
 
 def _cycle_sync() -> List[dict]:
@@ -94,8 +100,14 @@ def _cycle_sync() -> List[dict]:
     for src in sources:
         if not source_is_active(src, now):
             continue
-        with SessionLocal() as db:
-            out.append(run_source_once(db, src))
+        started = time.monotonic()
+        for _ in range(MAX_PAGES_PER_SOURCE_PER_CYCLE):
+            with SessionLocal() as db:
+                res = run_source_once(db, src)
+            out.append(res)
+            # keep going through the table while there are more rows; stop on error or when the time budget is spent
+            if not res["more"] or res["last_error"] or time.monotonic() - started > SOURCE_TIME_BUDGET_SECONDS:
+                break
     return out
 
 

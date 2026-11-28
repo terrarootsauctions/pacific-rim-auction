@@ -50,7 +50,11 @@ def ingest_rows(db: Session, rows: List[dict], mapping, source) -> dict:
     """Clean, de-duplicate, flag, score and save a batch. Raises ValueError for an oversize batch."""
     leads, rejected = lead_engine.normalize_batch(rows, mapping)
     out = _upsert(db, leads, source)
-    out.update({"received": len(rows), "rejected": len(rejected), "rejected_detail": rejected[:50]})
+    reasons: Dict[str, int] = {}
+    for r in rejected:
+        reasons[r["reason"]] = reasons.get(r["reason"], 0) + 1
+    out.update({"received": len(rows), "distinct_properties": len(leads), "rejected": len(rejected),
+                "rejected_reasons": reasons, "rejected_detail": rejected[:50]})
     return out
 
 
