@@ -13,9 +13,10 @@ from sqlalchemy.orm import Session
 from app.core.database import get_db
 from app.core.deps import get_current_user
 from app.models.enums import UserRole
-from app.models.property_lead import LEAD_STATUSES, PropertyLead
+from app.models.property_lead import LEAD_STATUSES, LeadSourceCursor, PropertyLead
 from app.models.user import User
 from app.services import lead_engine, outreach, outreach_events, public_sources
+from app.services.lead_ingest import _to_dict, ingest_rows
 from app.services.outreach import OutreachCampaignType
 
 router = APIRouter(prefix="/leads", tags=["leads"])
@@ -27,53 +28,11 @@ def require_admin(current_user: User = Depends(get_current_user)) -> User:
     return current_user
 
 
-def _to_dict(r: PropertyLead) -> dict:
-    return {
-        "id": r.id, "owner_name": r.owner_name, "address": r.address, "mailing_address": r.mailing_address,
-        "city": r.city, "state": r.state, "zip": r.zip, "county": r.county, "parcel_id": r.parcel_id,
-        "email": r.email, "phone": r.phone, "assessed_value": r.assessed_value, "mortgage_balance": r.mortgage_balance,
-        "amount_owed": r.amount_owed, "property_type": r.property_type,
-        "flags": [f for f in (r.flags or "").split(";") if f], "score": r.score, "status": r.status, "source": r.source,
-        "dedupe_key": r.dedupe_key,
-    }
-
-
-_FIELDS = ("owner_name", "address", "mailing_address", "city", "state", "zip", "county", "parcel_id", "email",
-           "phone", "assessed_value", "mortgage_balance", "amount_owed", "property_type")
-
-
-def _upsert(db: Session, leads: List[dict], source: Optional[str]) -> dict:
-    inserted = updated = 0
-    keys = [l["dedupe_key"] for l in leads]
-    existing: Dict[str, PropertyLead] = {}
-    for i in range(0, len(keys), 500):
-        for row in db.query(PropertyLead).filter(PropertyLead.dedupe_key.in_(keys[i:i + 500])).all():
-            existing[row.dedupe_key] = row
-    for lead in leads:
-        row = existing.get(lead["dedupe_key"])
-        if row is None:
-            db.add(PropertyLead(**{k: lead.get(k) for k in _FIELDS}, dedupe_key=lead["dedupe_key"],
-                                flags=";".join(lead["flags"]), score=lead["score"], status="new", source=source))
-            inserted += 1
-        else:
-            merged = lead_engine.merge_leads(_to_dict(row), lead)
-            for k in _FIELDS:
-                setattr(row, k, merged.get(k))
-            row.flags = ";".join(merged["flags"])
-            row.score = merged["score"]
-            updated += 1
-    db.commit()
-    return {"inserted": inserted, "updated": updated}
-
-
 def _ingest(db: Session, rows: List[dict], mapping, source) -> dict:
     try:
-        leads, rejected = lead_engine.normalize_batch(rows, mapping)
+        return ingest_rows(db, rows, mapping, source)
     except ValueError as exc:
         raise HTTPException(status_code=422, detail=str(exc))
-    out = _upsert(db, leads, source)
-    out.update({"received": len(rows), "rejected": len(rejected), "rejected_detail": rejected[:50]})
-    return out
 
 
 class ImportRecords(BaseModel):
@@ -221,3 +180,22 @@ def push_to_outreach(body: PushIn, db: Session = Depends(get_db), admin: User = 
         db.commit()
         sent += 1
     return {"considered": len(rows), "sent": sent, "skipped_opted_out": skipped, "failed": failed}
+
+
+@router.get("/sources/status")
+def lead_sources_status(db: Session = Depends(get_db), admin: User = Depends(require_admin)):
+    """What the 24/7 worker is doing: each configured source, whether its region is in daytime now,
+    where it is in the portal, and its last result or error."""
+    from app.core.config import get_settings
+    from app.services import lead_worker
+    srcs = lead_worker.load_sources(get_settings().lead_sources_json)
+    cursors = {c.name: c for c in db.query(LeadSourceCursor).all()}
+    out = []
+    for s in srcs:
+        c = cursors.get(s["name"])
+        out.append({"name": s["name"], "portal": f"{s['domain']}/{s['dataset_id']}", "timezone": s.get("timezone"),
+                    "working_now": lead_worker.source_is_active(s), "offset": c.offset if c else 0,
+                    "passes": c.pages_done if c else 0, "last_run": c.last_run.isoformat() if c and c.last_run else None,
+                    "last_result": c.last_result if c else None, "last_error": c.last_error if c else None})
+    total = db.query(PropertyLead).count()
+    return {"worker_enabled": get_settings().lead_loop_enabled, "sources": out, "total_leads": total}

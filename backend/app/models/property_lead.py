@@ -34,3 +34,15 @@ class PropertyLead(Base):
     source = Column(String, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+
+class LeadSourceCursor(Base):
+    """Where the continuous lead worker is in each configured source (so it resumes after a restart)."""
+    __tablename__ = "lead_source_cursors"
+
+    name = Column(String, primary_key=True)
+    offset = Column(Integer, nullable=False, default=0)
+    pages_done = Column(Integer, nullable=False, default=0)
+    last_run = Column(DateTime, nullable=True)
+    last_result = Column(Text, nullable=True)
+    last_error = Column(Text, nullable=True)

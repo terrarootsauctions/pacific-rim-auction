@@ -36,7 +36,7 @@ from app.api import (
 )
 from app.core.config import get_settings
 from app.core.database import Base, SessionLocal, engine
-from app.services import background, bootstrap, evolution, memory_lock, principal_decisions, sanctions
+from app.services import background, bootstrap, evolution, lead_worker, memory_lock, principal_decisions, sanctions
 
 settings = get_settings()
 log = logging.getLogger("pacific_rim")
@@ -63,6 +63,8 @@ async def lifespan(_app: FastAPI):
             asyncio.create_task(background.verify_loop(stop)),
             asyncio.create_task(background.recheck_loop(stop)),
         ]
+        if settings.lead_loop_enabled:
+            tasks.append(asyncio.create_task(lead_worker.lead_loop(stop)))
     if settings.sanctions_screening_enabled:
         tasks.append(asyncio.create_task(
             sanctions.refresh_loop(stop, settings.ofac_sdn_csv_url, settings.ofac_alt_csv_url)))

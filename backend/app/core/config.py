@@ -40,6 +40,13 @@ class Settings(BaseSettings):
 
     # --- Background operations (24/7 loop) ---
     background_enabled: bool = True
+    # Continuous lead search (24/7, follows the sun). LEAD_SOURCES_JSON is a JSON list, e.g.
+    # [{"name":"norfolk-tax","domain":"data.norfolk.gov","dataset_id":"7qie-z5gv","timezone":"America/New_York",
+    #   "page_size":2000,"mapping":{"owner_name":"owner_name","address":"address","amount_owed":"total"},
+    #   "flags":"tax_delinquent"}]. Empty = worker idles. See LEADS.md.
+    lead_sources_json: str = ""
+    lead_loop_enabled: bool = True
+    lead_loop_interval_seconds: int = 600
     auction_close_interval_seconds: int = 15
     memory_verify_interval_seconds: int = 3600
     gate_recheck_interval_seconds: int = 86400  # daily pass over listings still waiting on the gate
