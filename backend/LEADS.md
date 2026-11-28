@@ -102,3 +102,14 @@ not retrieve. Get that section (rpc@kauai.gov, 808-241-4272) or run the country 
 
 `push-outreach` takes `"include_claims_expired": true` to contact `claims_expired` leads as well (default false).
 Your campaign text decides what owners are told; the county's listing for those says claims will not be accepted.
+
+## 9. Other countries (CKAN portals) - the sun keeps moving
+Besides Socrata, the worker reads CKAN portals (Australia, Canada, UK, EU and many more). Entry shape:
+`{"name":"qld-unclaimed","type":"ckan","domain":"www.data.qld.gov.au","resource_id":"<dataset resource UUID>",
+  "timezone":"Australia/Brisbane","page_size":2000,"flags":"unclaimed_funds","mapping":{...}}`
+The resource must be datastore-enabled (its page shows an API / "Data API" button). Datasets that looked like fits
+(columns NOT yet checked, so first look at `rejected_reasons` in `GET /leads/sources/status` and add a `mapping`):
+Queensland unclaimed monies `872065ae-ddfd-4b5f-ad15-e1935dadd883` (data.qld.gov.au), Victoria unclaimed money claims
+`6d9458b5-a448-454c-a559-f368c36ec674` (discover.data.vic.gov.au), Canada unclaimed estate or trust funds
+`42006fa6-5068-4dfe-ba63-037c0fe1fa65` (open.canada.ca/data). Each source is worked only while its `timezone` is
+in daylight, so as Kauai goes dark the worker is already on Asia-Pacific, then Europe, then the Americas.
