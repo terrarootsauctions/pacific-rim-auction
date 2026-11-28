@@ -91,6 +91,8 @@ class Settings(BaseSettings):
     openai_base_url: str = "https://api.openai.com/v1"
     astra_model: str = ""
     astra_timeout_seconds: int = 120
+    astra_reasoning_effort: str = "high"   # low | medium | high | xhigh | max
+    astra_web_search: bool = True          # let the model look sources up live (legal drafting only)
 
     # --- Reply.io (outreach: sellers, agents/brokers, buyer follow-up) ---
     reply_io_api_key: str = ""

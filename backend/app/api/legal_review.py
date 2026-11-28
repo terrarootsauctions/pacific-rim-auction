@@ -58,6 +58,7 @@ def draft_with_astra(node_id: str, db: Session = Depends(get_db), user: User = D
         out = astra_draft.draft_packet(
             node.country_code, node.country_name, node.region_code,
             api_key=st.openai_api_key, model=st.astra_model, base_url=st.openai_base_url, timeout=st.astra_timeout_seconds,
+            effort=st.astra_reasoning_effort, web_search=st.astra_web_search,
         )
     except astra_draft.AstraError as exc:
         raise HTTPException(status_code=502, detail=str(exc))
@@ -84,6 +85,7 @@ def document_check(body: DocCheckIn, db: Session = Depends(get_db), user: User =
         out = astra_docs.check_document(
             body.document_text, body.statements, body.confirm_send_to_provider,
             api_key=st.openai_api_key, model=st.astra_model, base_url=st.openai_base_url, timeout=st.astra_timeout_seconds,
+            effort=st.astra_reasoning_effort,
         )
     except astra_docs.RequestError as exc:
         raise HTTPException(status_code=422, detail=str(exc))

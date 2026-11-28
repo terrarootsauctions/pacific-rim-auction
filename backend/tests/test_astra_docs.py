@@ -18,7 +18,7 @@ class Resp:
 
 def reply(results):
     c = json.dumps({"results": results})
-    return lambda *a: Resp(200, {"choices": [{"message": {"content": c}}]})
+    return lambda *a: Resp(200, {"status": "completed", "output": [{"type": "message", "content": [{"type": "output_text", "text": c, "annotations": []}]}]})
 
 
 def run(statements, results, **over):
@@ -59,9 +59,20 @@ def test_limits_and_config_fail_closed():
 
 
 def test_provider_failures_raise():
-    for post in (lambda *a: Resp(500, {}), lambda *a: Resp(200, {"x": 1}), lambda *a: Resp(200, {"choices": [{"message": {"content": "nope"}}]})):
+    bad = {"status": "completed", "output": [{"type": "message", "content": [{"type": "output_text", "text": "nope", "annotations": []}]}]}
+    for post in (lambda *a: Resp(500, {}), lambda *a: Resp(200, {"x": 1}), lambda *a: Resp(200, bad)):
         with pytest.raises(AstraError):
             run(["a"], [], post=post)
     def boom(*a): raise TimeoutError()
     with pytest.raises(AstraError):
         run(["a"], [], post=boom)
+
+
+def test_request_is_responses_api_strict_schema_no_web_search():
+    sent = {}
+    def spy(url, headers, body, timeout):
+        sent.update(url=url, body=body); return reply([{"index": 0, "verdict": "unclear", "quote": ""}])()
+    ad.check_document(DOC, ["a statement"], True, post=lambda u, h, b, t: (sent.update(url=u, body=b), reply([{"index": 0, "verdict": "unclear", "quote": ""}])())[1], effort="xhigh", **KW)
+    b = sent["body"]
+    assert sent["url"].endswith("/responses") and b["reasoning"] == {"effort": "xhigh"} and "tools" not in b
+    assert b["text"]["format"]["strict"] is True
