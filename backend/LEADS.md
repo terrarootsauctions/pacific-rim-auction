@@ -147,3 +147,10 @@ Closing an auction sets the listing to not-live, and checkout used to refuse any
 winner could never pay and no fee could be collected. Now, for a closed auction with a winner, `POST /payments/checkout`
 works only for the winning bidder and always uses the recorded winning bid (the amount in the request is ignored).
 Live fixed-price listings are unchanged.
+
+## 13. Revenue pipeline report
+`GET /reports/revenue-pipeline` (admin or compliance officer): (1) closed auctions with a winner, split into
+`no_payment_started`, `payment_pending` and `collected`, with sale and fee totals per currency and the listings
+themselves (winners in the first two groups are money waiting to be collected); (2) the unclaimed-property funnel:
+assets not yet verified, verified but Do No Harm pending, flagged, cleared but not listed, listed, sold, each with
+estimated value and the fee at the standard 5% rate. `GET /reports/commission` still shows closed sales and commission.
