@@ -96,3 +96,51 @@ async def bank_webhook(request: Request, db: Session = Depends(get_db)):
         raise HTTPException(status_code=401, detail=str(exc))
     except payments.PaymentError as exc:
         raise HTTPException(status_code=400, detail=str(exc))
+
+
+from pydantic import BaseModel as _BM  # noqa: E402
+from app.services.audit import record_audit_event as _audit  # noqa: E402
+
+
+class ManualCredit(_BM):
+    payment_reference: str      # the PRA-... reference the payer used
+    amount_usd: float
+    bank_reference: str         # the reference on the bank statement line (makes this safe to repeat)
+    currency: str = "USD"
+    notes: str = ""
+
+
+def _require_admin(user: User) -> None:
+    if user.role != UserRole.ADMIN:
+        raise HTTPException(status_code=403, detail="Admin access required")
+
+
+@router.post("/confirm-credit")
+def confirm_credit(body: ManualCredit, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    """Record a credit you can see on the bank statement, without waiting for a bank notification. Same matching
+    and ledger rules as the bank webhook: an exact fee match becomes revenue, anything else goes to review."""
+    _require_admin(current_user)
+    try:
+        result = payments.confirm_credit_manually(
+            db, payment_reference=body.payment_reference, amount_minor=money.usd_to_minor(body.amount_usd),
+            currency=body.currency, bank_reference=body.bank_reference)
+    except payments.PaymentError as exc:
+        raise HTTPException(status_code=400, detail=str(exc))
+    _audit(db, actor_user_id=current_user.id, actor_role=current_user.role.value, entity_type="bank_credit",
+           entity_id=body.bank_reference, action="credit_confirmed_manually", before_state=None,
+           after_state=str(result.get("status")), notes=body.notes or None)
+    return result
+
+
+@router.post("/transactions/{transaction_id}/resolve")
+def resolve_transaction(transaction_id: str, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    """Admin: recognize a needs_review transaction as collected, only if the bank credits received for it cover the fee."""
+    _require_admin(current_user)
+    try:
+        result = payments.resolve_needs_review(db, transaction_id)
+    except payments.PaymentError as exc:
+        raise HTTPException(status_code=400, detail=str(exc))
+    _audit(db, actor_user_id=current_user.id, actor_role=current_user.role.value, entity_type="transaction",
+           entity_id=transaction_id, action="needs_review_resolved", before_state="needs_review",
+           after_state="fee_collected", notes=None)
+    return result

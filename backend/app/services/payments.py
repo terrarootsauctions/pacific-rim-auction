@@ -187,6 +187,11 @@ def handle_bank_credit(db: Session, raw_body: bytes, signature: Optional[str]) -
     if event.event_type != "credit.received":
         return {"status": "ignored", "event_type": event.event_type}
 
+    return _apply_credit(db, event)
+
+
+def _apply_credit(db: Session, event: InboundCreditEvent) -> dict:
+    """Shared by the signed bank notification and the admin's manual confirmation from the bank statement."""
     already = db.get(BankEvent, event.event_id)
     if already:
         return {"status": "duplicate", "event_id": event.event_id, "result": already.status.value}
@@ -271,3 +276,44 @@ def handle_bank_credit(db: Session, raw_body: bytes, signature: Optional[str]) -
 
     db.commit()
     return {"status": status.value, "event_id": event.event_id, "transaction_id": txn.id if txn else None}
+
+
+def confirm_credit_manually(db: Session, *, payment_reference: str, amount_minor: int, currency: str, bank_reference: str) -> dict:
+    """An admin records a credit read from the bank's own statement. Goes through exactly the same matching and
+    ledger rules as a bank notification (exact fee match = revenue, anything else = needs review), and is safe to
+    repeat: the bank_reference is the idempotency key."""
+    if not bank_reference.strip():
+        raise PaymentError("bank_reference (the reference on the bank statement line) is required.")
+    try:
+        event = InboundCreditEvent(
+            event_id="manual:" + bank_reference.strip(), event_type="credit.received",
+            payment_reference=payment_reference.strip(), bank_reference=bank_reference.strip(),
+            currency=currency.upper(), amount_minor=amount_minor)
+    except ValidationError as exc:
+        raise PaymentError(f"Invalid credit: {exc}") from exc
+    return _apply_credit(db, event)
+
+
+def resolve_needs_review(db: Session, transaction_id: str) -> dict:
+    """A transaction stuck in NEEDS_REVIEW (e.g. the credit differed from the fee) is recognized as collected
+    only when the bank credits actually received for it add up to at least the fee. Moves exactly the fee from
+    UNAPPLIED_RECEIPTS to REVENUE; nothing is created from nowhere."""
+    txn = db.get(Transaction, transaction_id)
+    if txn is None:
+        raise PaymentError("Transaction not found.")
+    if txn.status != TransactionStatus.NEEDS_REVIEW:
+        raise PaymentError(f"Transaction is {txn.status.value}, not needs_review.")
+    credited = sum(e.amount_minor for e in db.query(BankEvent).filter(
+        BankEvent.transaction_id == txn.id, BankEvent.currency == txn.currency).all())
+    if credited < txn.platform_fee_minor:
+        raise PaymentError(f"Bank credits received ({credited}) are less than the fee ({txn.platform_fee_minor}).")
+    event_id = f"resolve:{txn.id}"
+    db.add_all([
+        LedgerEntry(event_id=event_id, transaction_id=txn.id, entity_code=txn.entity_code, account_code="UNAPPLIED_RECEIPTS",
+                    currency=txn.currency, debit_minor=txn.platform_fee_minor, credit_minor=0),
+        LedgerEntry(event_id=event_id, transaction_id=txn.id, entity_code=txn.entity_code, account_code="REVENUE",
+                    currency=txn.currency, debit_minor=0, credit_minor=txn.platform_fee_minor),
+    ])
+    txn.status = TransactionStatus.FEE_COLLECTED
+    db.commit()
+    return {"transaction_id": txn.id, "status": txn.status.value, "fee_minor": txn.platform_fee_minor, "credited_minor": int(credited)}
