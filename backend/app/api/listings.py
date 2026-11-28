@@ -44,8 +44,14 @@ def create_listing(
             detail=f"Asset must be VERIFIED before listing (current status: {asset.status.value})",
         )
 
+    # The asset's jurisdiction field is derived from the country's legal-review node (ACTIVE = cleared); it is
+    # never typed in, so it cannot drift from the review record.
+    juris_ok, juris_reason = compliance.jurisdiction_node_cleared(db, asset.source_country, asset.source_region)
+    asset.jurisdiction_cleared = "cleared" if juris_ok else "pending"
     cleared, reason = compliance.asset_cleared_for_listing(asset)
     if not cleared:
+        if asset.do_no_harm_cleared == "cleared" and not juris_ok:
+            reason = juris_reason
         raise HTTPException(status_code=400, detail=reason)
 
     requires_inspection = compliance.listing_requires_inspection(asset)
