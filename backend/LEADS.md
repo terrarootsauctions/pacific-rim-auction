@@ -154,3 +154,18 @@ Live fixed-price listings are unchanged.
 themselves (winners in the first two groups are money waiting to be collected); (2) the unclaimed-property funnel:
 assets not yet verified, verified but Do No Harm pending, flagged, cleared but not listed, listed, sold, each with
 estimated value and the fee at the standard 5% rate. `GET /reports/commission` still shows closed sales and commission.
+
+## 14. Getting revenue recorded when it reaches the bank (fixed)
+Revenue used to be recorded only if the bank sent a signed notification in a format that the payments code itself
+says was a guess (not the bank's real specification), and any credit that did not equal the fee exactly stayed in
+`needs_review` with no way out. Both are fixed; the bank notification still works if/when the bank sends it.
+* `POST /payments/confirm-credit` (admin): record a credit you can see on the bank statement:
+  `{"payment_reference":"PRA-XXXXXXXXXX","amount_usd":1234.56,"bank_reference":"<statement line reference>","notes":""}`.
+  Same matching and ledger rules as the webhook (exact fee match = revenue, otherwise review). Repeating the same
+  `bank_reference` is safe: it is counted once. Audited.
+* `POST /payments/transactions/{id}/resolve` (admin): for a `needs_review` transaction, recognizes the fee as collected
+  only when the bank credits actually received for it add up to at least the fee; moves exactly the fee from
+  UNAPPLIED_RECEIPTS to REVENUE. Audited.
+* Still required in Render: `FHB_ACCOUNT_NUMBER` (checkout is refused without it) and, to accept bank notifications,
+  `FHB_WEBHOOK_SECRET`. Each transaction's fee rate is clamped to 5-8% by the platform's fee code; if your Stage B scale
+  is 3-5%, that clamp is the thing to change (not changed here).
