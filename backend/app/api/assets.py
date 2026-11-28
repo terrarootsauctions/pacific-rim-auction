@@ -8,6 +8,8 @@ from app.core.database import get_db
 from app.core.deps import get_current_user
 from app.models.asset import Asset
 from app.models.enums import AssetCategory, AssetStatus, UserRole
+from app.models.jurisdiction_node import NodeStatus
+from app.services import compliance
 from app.models.user import User
 from app.schemas.asset import AssetCreate, AssetOut, AssetStatusUpdate
 from app.services.audit import record_audit_event
@@ -131,3 +133,50 @@ def review_do_no_harm(
         notes=f"reviewed_by: {review.reviewed_by.strip()}. {review.notes or ''}".strip(),
     )
     return asset
+
+
+class DoNoHarmBulk(BaseModel):
+    reviewed_by: str                       # the named person making the call for this batch
+    country_code: Optional[str] = None     # limit to one country
+    category: Optional[AssetCategory] = None
+    notes: Optional[str] = None
+    limit: int = 500                       # per call, max 2000
+
+
+@router.post("/do-no-harm/bulk")
+def clear_do_no_harm_bulk(
+    body: DoNoHarmBulk,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """Clears Do No Harm on every VERIFIED asset still 'pending' (optionally one country or category), in one
+    call, under one named reviewer. Admin only. Skips, and reports, any asset whose country's legal-review node is
+    RESTRICTED, SUSPENDED or has a recorded check failure, and anything already flagged. Every asset cleared gets
+    its own audit entry. Clearing Do No Harm does not make a listing live: the country node must still be ACTIVE."""
+    if current_user.role != UserRole.ADMIN:
+        raise HTTPException(status_code=403, detail="Admin access required")
+    if not body.reviewed_by.strip():
+        raise HTTPException(status_code=422, detail="reviewed_by must name the person making this review")
+    q = db.query(Asset).filter(Asset.status == AssetStatus.VERIFIED, Asset.do_no_harm_cleared == "pending")
+    if body.country_code:
+        q = q.filter(Asset.source_country == body.country_code.upper())
+    if body.category:
+        q = q.filter(Asset.category == body.category)
+    assets = q.limit(min(max(body.limit, 1), 2000)).all()
+    blocked = (NodeStatus.RESTRICTED, NodeStatus.SUSPENDED, NodeStatus.CHECK_FAILED)
+    cleared, skipped = 0, []
+    for a in assets:
+        node = compliance.get_jurisdiction_node(db, a.source_country, a.source_region)
+        if node is not None and node.status in blocked:
+            skipped.append({"asset_id": a.id, "country": a.source_country, "reason": f"jurisdiction node is {node.status.value}"})
+            continue
+        a.do_no_harm_cleared = "cleared"
+        record_audit_event(
+            db, actor_user_id=current_user.id, actor_role=current_user.role.value, entity_type="asset",
+            entity_id=a.id, action="do_no_harm_reviewed", before_state="do_no_harm_cleared=pending",
+            after_state="do_no_harm_cleared=cleared",
+            notes=f"bulk review, reviewed_by: {body.reviewed_by.strip()}. {body.notes or ''}".strip())
+        cleared += 1
+    db.commit()
+    return {"considered": len(assets), "cleared": cleared, "skipped": len(skipped), "skipped_detail": skipped[:100],
+            "more_remaining": len(assets) == min(max(body.limit, 1), 2000)}

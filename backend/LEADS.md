@@ -132,3 +132,12 @@ Per property, the path to a live auction is now: asset VERIFIED -> Do No Harm cl
 -> create listing -> lawful basis recorded -> for real property, the three inspections disclosed -> daily recheck
 publishes it. The country nodes are the biggest lever: until a node is ACTIVE, every asset from that country waits.
 `GET /jurisdiction-nodes/coverage` shows how many are ACTIVE.
+
+### Clearing Do No Harm for many assets at once
+`POST /assets/do-no-harm/bulk` (admin only)
+`{"reviewed_by":"<your name>","country_code":"US","notes":"..."}` - leave `country_code` out for all countries; repeat the call while
+`more_remaining` is true (500 per call by default, 2000 max). It clears every VERIFIED asset still `pending`, writes one audit entry per
+asset naming you as reviewer, and skips (and lists) assets whose country node is RESTRICTED, SUSPENDED or has a check failure.
+It does not make anything live: the country node must also be ACTIVE (`PATCH /jurisdiction-nodes/{id}/review`), and the lawful basis
+and, for real property, the three inspections must be on record. Assets not yet VERIFIED are not touched; verify them first with
+`PATCH /assets/{id}/status`.
