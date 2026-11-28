@@ -199,7 +199,7 @@ def lead_sources_status(db: Session = Depends(get_db), admin: User = Depends(req
     out = []
     for s in srcs:
         c = cursors.get(s["name"])
-        out.append({"name": s["name"], "portal": f"{s['domain']}/{s['dataset_id']}", "timezone": s.get("timezone"),
+        out.append({"name": s["name"], "portal": f"{s['domain']}/{s.get('dataset_id') or s.get('resource_id')}", "timezone": s.get("timezone"),
                     "working_now": lead_worker.source_is_active(s), "offset": c.offset if c else 0,
                     "passes": c.pages_done if c else 0, "last_run": c.last_run.isoformat() if c and c.last_run else None,
                     "last_result": c.last_result if c else None, "last_error": c.last_error if c else None})

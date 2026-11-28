@@ -41,7 +41,10 @@ def load_sources(raw: str) -> List[dict]:
     for it in items if isinstance(items, list) else []:
         try:
             name = str(it["name"]).strip()
-            public_sources.validate_portal(it["domain"], it["dataset_id"])
+            if it.get("type") == "ckan":
+                public_sources.validate_ckan(it["domain"], it["resource_id"])
+            else:
+                public_sources.validate_portal(it["domain"], it["dataset_id"])
             tz = it.get("timezone")
             if tz:
                 follow_the_sun.is_daytime(tz)   # raises if not a real time zone
@@ -70,12 +73,15 @@ def run_source_once(db, src: dict) -> dict:
         db.add(cur)
     page = max(1, min(int(src.get("page_size", 2000)), public_sources.MAX_ROWS))
     try:
-        rows = public_sources.fetch_socrata(src["domain"], src["dataset_id"], limit=page, offset=cur.offset,
-                                            where=src.get("where"), app_token=src.get("app_token"))
+        if src.get("type") == "ckan":
+            rows = public_sources.fetch_ckan(src["domain"], src["resource_id"], limit=page, offset=cur.offset)
+        else:
+            rows = public_sources.fetch_socrata(src["domain"], src["dataset_id"], limit=page, offset=cur.offset,
+                                                where=src.get("where"), app_token=src.get("app_token"))
         if src.get("flags"):
             rows = [dict(r, **{"flags": ";".join(x for x in (str(r.get("flags") or ""), src["flags"]) if x)})
                     if isinstance(r, dict) else r for r in rows]
-        result = lead_ingest.ingest_rows(db, rows, src.get("mapping"), f"{src['domain']}/{src['dataset_id']}")
+        result = lead_ingest.ingest_rows(db, rows, src.get("mapping"), f"{src['domain']}/{src.get('dataset_id') or src.get('resource_id')}")
         cur.offset = 0 if len(rows) < page else cur.offset + len(rows)
         cur.pages_done = (cur.pages_done or 0) + 1
         cur.last_error = None

@@ -51,3 +51,33 @@ def fetch_socrata(domain: str, dataset_id: str, *, limit: int = 1000, offset: in
     if not isinstance(rows, list):
         raise SourceError(f"{domain} returned an unexpected response.")
     return rows
+
+
+_UUID = re.compile(r"^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$")
+
+
+def validate_ckan(domain: str, resource_id: str) -> None:
+    validate_portal(domain, "abcd-1234")
+    if not _UUID.match((resource_id or "").strip().lower()):
+        raise SourceError("resource_id must be the dataset resource's UUID")
+
+
+def fetch_ckan(domain: str, resource_id: str, *, limit: int = 1000, offset: int = 0, get=requests.get) -> List[dict]:
+    """CKAN open-data portals (used by Australia, Canada, the UK, EU states and many others):
+    /api/3/action/datastore_search, read in the portal's own row order."""
+    validate_ckan(domain, resource_id)
+    limit = max(1, min(int(limit), MAX_ROWS))
+    url = f"https://{domain.strip().lower()}/api/3/action/datastore_search"
+    try:
+        r = get(url, params={"resource_id": resource_id.strip().lower(), "limit": limit, "offset": max(0, int(offset))},
+                timeout=60, allow_redirects=False)
+    except requests.RequestException as exc:
+        raise SourceError(f"Could not reach {domain}: {exc}")
+    if r.status_code != 200:
+        raise SourceError(f"{domain} answered HTTP {r.status_code}.")
+    try:
+        body = r.json()
+        rows = body["result"]["records"]
+    except (ValueError, KeyError, TypeError):
+        raise SourceError(f"{domain} did not return CKAN records (is this a datastore-enabled resource?).")
+    return [{k: v for k, v in row.items() if k != "_id"} for row in rows if isinstance(row, dict)]
