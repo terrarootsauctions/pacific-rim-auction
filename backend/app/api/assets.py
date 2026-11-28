@@ -1,6 +1,7 @@
-from typing import List, Optional
+from typing import List, Literal, Optional
 
 from fastapi import APIRouter, Depends, HTTPException
+from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
@@ -88,4 +89,45 @@ def update_asset_status(
         after_state=f"status={asset.status.value}",
     )
 
+    return asset
+
+
+class DoNoHarmReview(BaseModel):
+    do_no_harm_cleared: Literal["pending", "cleared", "flagged"]
+    reviewed_by: str          # the named person who made the call
+    notes: Optional[str] = None
+
+
+@router.patch("/{asset_id}/do-no-harm", response_model=AssetOut)
+def review_do_no_harm(
+    asset_id: str,
+    review: DoNoHarmReview,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """Records the Do No Harm screening result for an asset. This is the step a listing waits on: until an
+    asset is 'cleared' here, no listing can be created from it. Admin or compliance officer only, a named
+    reviewer is required, and the change is written to the audit log. Nothing sets this automatically."""
+    if current_user.role not in (UserRole.ADMIN, UserRole.COMPLIANCE_OFFICER):
+        raise HTTPException(status_code=403, detail="Not authorized to review Do No Harm")
+    if not review.reviewed_by.strip():
+        raise HTTPException(status_code=422, detail="reviewed_by must name the person who made the review")
+    asset = db.query(Asset).filter(Asset.id == asset_id).first()
+    if not asset:
+        raise HTTPException(status_code=404, detail="Asset not found")
+    before = asset.do_no_harm_cleared
+    asset.do_no_harm_cleared = review.do_no_harm_cleared
+    db.commit()
+    db.refresh(asset)
+    record_audit_event(
+        db,
+        actor_user_id=current_user.id,
+        actor_role=current_user.role.value,
+        entity_type="asset",
+        entity_id=asset.id,
+        action="do_no_harm_reviewed",
+        before_state=f"do_no_harm_cleared={before}",
+        after_state=f"do_no_harm_cleared={asset.do_no_harm_cleared}",
+        notes=f"reviewed_by: {review.reviewed_by.strip()}. {review.notes or ''}".strip(),
+    )
     return asset

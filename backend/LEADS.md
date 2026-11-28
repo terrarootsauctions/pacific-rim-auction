@@ -119,3 +119,16 @@ Leads whose source says the claim deadline has passed (`claims_expired`) no long
 `/leads/export.csv` or outreach. They are still re-read each pass by the worker; if a source re-lists them with
 an open deadline the flag clears and they appear again at once. `GET /leads/sources/status` shows how many are
 hidden (`hidden_claims_closed`). Only `push-outreach` with `"include_claims_expired": true` brings them back.
+
+## 11. Why nothing could go live (fixed) - read this
+A listing could only be created from an asset whose `do_no_harm_cleared` and `jurisdiction_cleared` were both
+"cleared", and no code ever set either (they started "pending" forever), so no auction could open anywhere.
+* `jurisdiction_cleared` is now derived when a listing is created: it is "cleared" exactly when that country's
+  jurisdiction node is ACTIVE (set by a named human at `PATCH /jurisdiction-nodes/{id}/review`). Nothing else changes
+  about legal review.
+* `PATCH /assets/{asset_id}/do-no-harm` (admin or compliance officer, named `reviewed_by`, audited) records the
+  Do No Harm result: `{"do_no_harm_cleared":"cleared","reviewed_by":"<name>","notes":"..."}`.
+Per property, the path to a live auction is now: asset VERIFIED -> Do No Harm cleared (above) -> country node ACTIVE
+-> create listing -> lawful basis recorded -> for real property, the three inspections disclosed -> daily recheck
+publishes it. The country nodes are the biggest lever: until a node is ACTIVE, every asset from that country waits.
+`GET /jurisdiction-nodes/coverage` shows how many are ACTIVE.
