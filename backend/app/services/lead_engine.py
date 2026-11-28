@@ -276,7 +276,7 @@ def parse_csv(text: str) -> List[dict]:
     return rows
 
 
-CSV_FIELDS = ["owner_name", "address", "city", "state", "zip", "county", "parcel_id", "email", "phone",
+CSV_FIELDS = ["est_revenue", "owner_name", "address", "city", "state", "zip", "county", "parcel_id", "email", "phone",
               "assessed_value", "amount_owed", "property_type", "flags", "score", "status", "source"]
 
 
@@ -322,3 +322,17 @@ def split_owner_name(owner: Optional[str]) -> Tuple[Optional[str], Optional[str]
     if len(parts) == 1:
         return None, parts[0], None
     return parts[0], parts[-1], None
+
+
+STAGE_B_RATE = 0.03   # low end of the 3-5% rolling scale on a marketplace closing
+
+
+def revenue_estimate(lead: dict) -> dict:
+    """What a lead could be worth to Pacific Rim, from the owner's stated revenue model - an ESTIMATE
+    from the record's own numbers, not a forecast of what will close.
+      stage_a: money held for the owner (amount_owed) - Stage A keeps 100% of proceeds.
+      stage_b: a marketplace sale of the property - 3% of assessed value (low end of the 3-5% scale).
+    'best' is the larger; 'basis' says which one it is."""
+    a = round(lead.get("amount_owed") or 0, 2) if "unclaimed_funds" in (lead.get("flags") or []) else 0.0
+    b = round((lead.get("assessed_value") or 0) * STAGE_B_RATE, 2)
+    return {"stage_a": a, "stage_b": b, "best": max(a, b), "basis": "stage_a" if a >= b and a > 0 else ("stage_b" if b > 0 else "none")}

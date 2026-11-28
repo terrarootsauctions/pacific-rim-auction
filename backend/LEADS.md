@@ -82,3 +82,10 @@ variable, `LEAD_SOURCES_JSON` - a JSON list, one entry per open-data table:
 * A row is rejected only if it has neither a street address nor a parcel id. Every import and every worker pass
   reports `received`, `distinct_properties` and `rejected` with the reasons; see `last_result` in `GET /leads/sources/status`.
   If a portal's rejected count is high, its column names need a `mapping` entry.
+
+## 7. Revenue ranking
+Every lead carries `est_revenue` (and a `revenue` breakdown): Stage A = the unclaimed amount held for the owner
+(100% to Pacific Rim Auctions / TerraRoots), Stage B = 3% of assessed value (low end of your 3-5% scale). These are
+estimates from the record's own numbers, not forecasts. `GET /leads`, `/leads/export.csv` and
+`POST /leads/push-outreach` all work the highest `est_revenue` first, so outreach capacity goes to the biggest
+opportunities first. Leads whose records have neither an amount nor an assessed value rank last.
